@@ -11,8 +11,12 @@ android {
         applicationId = "com.manajir.voicetest"
         minSdk = 29
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0"
+    }
+
+    buildFeatures {
+        aidl = true
     }
 
     compileOptions {
@@ -22,4 +26,9 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+}
+
+dependencies {
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
 }

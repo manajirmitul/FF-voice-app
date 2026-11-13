@@ -17,6 +17,8 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import java.io.IOException
+import java.io.OutputStream
 import kotlin.math.abs
 
 class CaptureService : Service() {
@@ -27,8 +29,10 @@ class CaptureService : Service() {
         const val EXTRA_CODE = "code"
         const val EXTRA_DATA = "data"
         private const val CHANNEL_ID = "capture"
+        const val SAMPLE_RATE = 44100
 
         @Volatile var running = false
+        @Volatile var sink: OutputStream? = null
         var onLevel: ((Int) -> Unit)? = null
         var onStatus: ((String) -> Unit)? = null
     }
@@ -70,8 +74,8 @@ class CaptureService : Service() {
             NotificationChannel(CHANNEL_ID, "Audio capture", NotificationManager.IMPORTANCE_LOW)
         )
         val notification = Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("Audio Capture Test")
-            .setContentText("ফোনের ভেতরের অডিও ধরা হচ্ছে")
+            .setContentTitle("Audio Mic Test")
+            .setContentText("ফোনের গান ধরা হচ্ছে")
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .build()
         startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
@@ -89,20 +93,20 @@ class CaptureService : Service() {
             }, Handler(Looper.getMainLooper()))
             projection = mp
 
+            // Only music/media. Game sound and voice chat are NOT captured,
+            // so they don't get fed back into the mic.
             val config = AudioPlaybackCaptureConfiguration.Builder(mp)
                 .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
-                .addMatchingUsage(AudioAttributes.USAGE_GAME)
-                .addMatchingUsage(AudioAttributes.USAGE_UNKNOWN)
                 .build()
 
             val format = AudioFormat.Builder()
                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                .setSampleRate(44100)
-                .setChannelMask(AudioFormat.CHANNEL_IN_STEREO)
+                .setSampleRate(SAMPLE_RATE)
+                .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
                 .build()
 
             val minBuf = AudioRecord.getMinBufferSize(
-                44100, AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT
+                SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
             )
 
             val rec = AudioRecord.Builder()
@@ -113,7 +117,7 @@ class CaptureService : Service() {
             record = rec
             rec.startRecording()
             running = true
-            onStatus?.invoke("চলছে। এখন অন্য অ্যাপে গান চালান")
+            onStatus?.invoke("গান ধরা চলছে। এখন মিউজিক অ্যাপে গান চালান")
 
             worker = Thread {
                 val buf = ShortArray(2048)
@@ -126,6 +130,21 @@ class CaptureService : Service() {
                             if (v > peak) peak = v
                         }
                         onLevel?.invoke((peak * 100 / 32767).coerceAtMost(100))
+
+                        val out = sink
+                        if (out != null) {
+                            val bytes = ByteArray(n * 2)
+                            for (i in 0 until n) {
+                                val s = buf[i].toInt()
+                                bytes[2 * i] = (s and 0xff).toByte()
+                                bytes[2 * i + 1] = (s shr 8).toByte()
+                            }
+                            try {
+                                out.write(bytes)
+                            } catch (e: IOException) {
+                                sink = null
+                            }
+                        }
                     }
                 }
             }.also { it.start() }
@@ -144,7 +163,7 @@ class CaptureService : Service() {
         try { projection?.stop() } catch (_: Exception) {}
         projection = null
         onLevel?.invoke(0)
-        onStatus?.invoke("বন্ধ আছে")
+        onStatus?.invoke("গান ধরা বন্ধ")
     }
 
     override fun onDestroy() {
