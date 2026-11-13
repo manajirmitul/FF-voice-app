@@ -24,6 +24,7 @@ class MicService(private var ctx: Context?) : IMicService.Stub() {
 
     private val log = StringBuilder()
     private val logFile = java.io.File("/data/local/tmp/micservice.log")
+    private val writeLock = Any()
 
     private fun crumb(msg: String) {
         try {
@@ -236,7 +237,7 @@ class MicService(private var ctx: Context?) : IMicService.Stub() {
                         val total = carry + n
                         val even = total - (total % 2)
                         if (even > 0) {
-                            val w = t.write(buf, 0, even)
+                            val w = synchronized(writeLock) { t.write(buf, 0, even) }
                             if (w < 0) crumb("track.write returned $w")
                         }
                         carry = total - even
@@ -265,18 +266,27 @@ class MicService(private var ctx: Context?) : IMicService.Stub() {
 
     override fun tone(seconds: Int): String {
         val t = track ?: return "আগে মাইক পাথ চালু করুন"
+        crumb("tone requested")
         Thread {
             try {
                 val rate = t.sampleRate
                 val ch = t.channelCount
                 val total = rate * seconds
-                val data = ShortArray(total * ch)
-                for (i in 0 until total) {
-                    val v = (sin(2.0 * Math.PI * 440.0 * i / rate) * 12000).toInt().toShort()
-                    for (c in 0 until ch) data[i * ch + c] = v
+                val chunk = rate / 50
+                var i = 0
+                while (i < total && track === t) {
+                    val end = minOf(i + chunk, total)
+                    val data = ShortArray((end - i) * ch)
+                    for (k in i until end) {
+                        val v = (sin(2.0 * Math.PI * 440.0 * k / rate) * 12000).toInt().toShort()
+                        for (c in 0 until ch) data[(k - i) * ch + c] = v
+                    }
+                    synchronized(writeLock) { t.write(data, 0, data.size) }
+                    i = end
                 }
-                t.write(data, 0, data.size)
-            } catch (_: Throwable) {
+                crumb("tone finished")
+            } catch (e: Throwable) {
+                crumb("tone error: " + err(e))
             }
         }.start()
         return "টোন পাঠানো হচ্ছে ($seconds সেকেন্ড)"
