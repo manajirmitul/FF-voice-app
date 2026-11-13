@@ -72,6 +72,17 @@ class MicService(private var ctx: Context?) : IMicService.Stub() {
     }
 
     override fun start(input: ParcelFileDescriptor, sampleRate: Int): String {
+        // Inside a binder call the "calling uid" is our app, which lacks
+        // MODIFY_AUDIO_ROUTING. Clear it so permission checks use the shell uid.
+        val token = android.os.Binder.clearCallingIdentity()
+        try {
+            return doStart(input, sampleRate)
+        } finally {
+            android.os.Binder.restoreCallingIdentity(token)
+        }
+    }
+
+    private fun doStart(input: ParcelFileDescriptor, sampleRate: Int): String {
         log.setLength(0)
         try {
             stop()
@@ -156,7 +167,19 @@ class MicService(private var ctx: Context?) : IMicService.Stub() {
             policy = pol
 
             // 4. injection track
-            val t = policyCls.getMethod("createAudioTrackSource", mixCls).invoke(pol, mix) as AudioTrack
+            val t = policyCls.getMethod("createAudioTrackSource", mixCls).invoke(pol, mix) as AudioTrack?
+            if (t == null) {
+                l("createAudioTrackSource returned null")
+                try {
+                    val m = policyCls.getDeclaredMethod("policyReadyToUse")
+                    m.isAccessible = true
+                    l("policyReadyToUse=" + m.invoke(pol))
+                } catch (e: Throwable) {
+                    l("policyReadyToUse check failed: " + err(e))
+                }
+                l("RESULT=FAIL (no track)")
+                return log.toString()
+            }
             t.play()
             track = t
             l("track rate=" + t.sampleRate + " channels=" + t.channelCount + " state=" + t.playState)
