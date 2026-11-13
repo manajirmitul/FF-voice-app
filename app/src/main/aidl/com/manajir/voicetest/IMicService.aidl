@@ -7,4 +7,5 @@ interface IMicService {
     String start(in ParcelFileDescriptor input, int sampleRate) = 1;
     String tone(int seconds) = 2;
     void stop() = 3;
+    String lastLog() = 4;
 }

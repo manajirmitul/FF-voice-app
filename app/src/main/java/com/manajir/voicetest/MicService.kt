@@ -23,6 +23,23 @@ class MicService(private var ctx: Context?) : IMicService.Stub() {
     constructor() : this(null)
 
     private val log = StringBuilder()
+    private val logFile = java.io.File("/data/local/tmp/micservice.log")
+
+    private fun crumb(msg: String) {
+        try {
+            logFile.appendText((System.currentTimeMillis() % 1000000).toString() + " " + msg + "\n")
+        } catch (_: Throwable) {
+        }
+    }
+
+    init {
+        val prev = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { th, e ->
+            crumb("CRASH in " + th.name + ": " + err(e))
+            prev?.uncaughtException(th, e)
+        }
+        crumb("service created pid=" + android.os.Process.myPid())
+    }
     private var policy: Any? = null
     private var audioManager: AudioManager? = null
     private var track: AudioTrack? = null
@@ -66,7 +83,17 @@ class MicService(private var ctx: Context?) : IMicService.Stub() {
         return b.build()
     }
 
+    override fun lastLog(): String {
+        return try {
+            val t = logFile.readText()
+            if (t.length > 3000) t.takeLast(3000) else t
+        } catch (e: Throwable) {
+            "no service log: $e"
+        }
+    }
+
     override fun destroy() {
+        crumb("destroy() called by Shizuku")
         stop()
         System.exit(0)
     }
@@ -84,6 +111,11 @@ class MicService(private var ctx: Context?) : IMicService.Stub() {
 
     private fun doStart(input: ParcelFileDescriptor, sampleRate: Int): String {
         log.setLength(0)
+        try {
+            logFile.writeText("")
+        } catch (_: Throwable) {
+        }
+        crumb("start called")
         try {
             stop()
             l("uid=" + android.os.Process.myUid() + " sdk=" + android.os.Build.VERSION.SDK_INT +
@@ -190,14 +222,37 @@ class MicService(private var ctx: Context?) : IMicService.Stub() {
             val ins = FileInputStream(input.fileDescriptor)
             reader = Thread {
                 val buf = ByteArray(4096)
+                var carry = 0
+                var chunks = 0L
+                var lastBeat = System.currentTimeMillis()
+                crumb("reader started")
                 try {
                     while (running) {
-                        val n = ins.read(buf)
-                        if (n < 0) break
-                        if (n > 0) t.write(buf, 0, n)
+                        val n = ins.read(buf, carry, buf.size - carry)
+                        if (n < 0) {
+                            crumb("pipe closed (EOF)")
+                            break
+                        }
+                        val total = carry + n
+                        val even = total - (total % 2)
+                        if (even > 0) {
+                            val w = t.write(buf, 0, even)
+                            if (w < 0) crumb("track.write returned $w")
+                        }
+                        carry = total - even
+                        if (carry == 1) buf[0] = buf[even]
+                        chunks++
+                        if (chunks == 1L) crumb("first data received")
+                        val now = System.currentTimeMillis()
+                        if (now - lastBeat > 2000) {
+                            crumb("alive chunks=$chunks")
+                            lastBeat = now
+                        }
                     }
-                } catch (_: Throwable) {
+                } catch (e: Throwable) {
+                    crumb("reader error: " + err(e))
                 }
+                crumb("reader exit")
             }.also { it.start() }
 
             l("RESULT=OK")
@@ -228,6 +283,7 @@ class MicService(private var ctx: Context?) : IMicService.Stub() {
     }
 
     override fun stop() {
+        crumb("stop called")
         running = false
         try { track?.stop() } catch (_: Throwable) {}
         try { track?.release() } catch (_: Throwable) {}

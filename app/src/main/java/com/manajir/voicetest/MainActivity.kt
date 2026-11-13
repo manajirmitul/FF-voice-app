@@ -42,6 +42,7 @@ class MainActivity : Activity() {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             svc = IMicService.Stub.asInterface(binder)
             log("Shizuku সার্ভিস সংযুক্ত হয়েছে")
+            showServiceLog()
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
@@ -53,6 +54,14 @@ class MainActivity : Activity() {
     private fun userArgs() = Shizuku.UserServiceArgs(
         ComponentName(packageName, MicService::class.java.name)
     ).daemon(false).processNameSuffix("mic").debuggable(false).version(2)
+
+    private fun showServiceLog() {
+        val s = svc ?: return
+        Thread {
+            val t = try { s.lastLog() } catch (e: Throwable) { "লগ পড়া যায়নি: $e" }
+            log("সার্ভিস লগ:\n" + t)
+        }.start()
+    }
 
     private fun log(s: String) {
         runOnUiThread { logView.append(s + "\n\n") }
@@ -93,6 +102,7 @@ class MainActivity : Activity() {
         root.addView(makeButton("৪. গান ধরা শুরু") { beginCapture() })
         root.addView(bar, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 60))
         root.addView(makeButton("সব বন্ধ করুন") { stopAll() })
+        root.addView(makeButton("সার্ভিস লগ দেখুন") { showServiceLog() })
         root.addView(makeButton("লগ কপি করুন") { copyLog() })
         root.addView(logView)
         scroll.addView(root)

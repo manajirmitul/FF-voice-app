@@ -143,6 +143,7 @@ class CaptureService : Service() {
                                 out.write(bytes)
                             } catch (e: IOException) {
                                 sink = null
+                                onStatus?.invoke("পাইপ ভেঙে গেছে: মাইক সার্ভিস আর পড়ছে না")
                             }
                         }
                     }
