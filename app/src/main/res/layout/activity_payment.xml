@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center_horizontal"
+    android:background="@color/black">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="পেমেন্ট সম্পন্ন করুন"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="24dp"/>
+
+    <TextView
+        android:id="@+id/tvPlanInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="নির্বাচিত প্ল্যান: ১ মাস - ১০০ টাকা"
+        android:textSize="16sp"
+        android:textColor="#FFEB3B"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="দয়া করে নিচের নম্বরে সেন্ড মানি করুন:\n• বিকাশ (Personal): 01728277602\n• নগদ (Personal): 01331383836"
+        android:textSize="15sp"
+        android:textColor="@android:color/white"
+        android:background="@drawable/bg_card"
+        android:padding="16dp"
+        android:layout_marginBottom="20dp"/>
+
+    <EditText
+        android:id="@+id/etTrxId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="বিকাশ/নগদ Transaction ID (TrxID) লিখুন"
+        android:textColor="@android:color/white"
+        android:textColorHint="#888888"
+        android:background="@drawable/bg_input"
+        android:padding="14dp"
+        android:layout_marginBottom="20dp"
+        android:inputType="textCapCharacters"/>
+
+    <Button
+        android:id="@+id/btnSubmitPayment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="পেমেন্ট জমা দিন"
+        android:background="@drawable/bg_btn_primary"
+        android:textColor="@android:color/white"
+        android:padding="12dp"/>
+
+</LinearLayout>
