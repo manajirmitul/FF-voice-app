@@ -12,6 +12,7 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.view.KeyEvent
 import rikka.shizuku.Shizuku
+import java.io.IOException
 import java.io.OutputStream
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -171,9 +172,26 @@ object Engine {
     private fun finish(ok: Boolean) {
         val cb = pending
         pending = null
-        if (!ok) busy = false
+        busy = false
         cb?.invoke(ok)
         notifyChange()
+    }
+
+    private val sinkLock = Any()
+
+    /** Thread-safe write of 16-bit mono PCM (even length) into the mic pipe. */
+    fun writeSink(b: ByteArray, len: Int): Boolean {
+        val out = sink ?: return false
+        synchronized(sinkLock) {
+            try {
+                out.write(b, 0, len)
+                return true
+            } catch (e: IOException) {
+                if (sink === out) sink = null
+                log("পাইপ ভেঙে গেছে: মাইক সার্ভিস আর পড়ছে না")
+                return false
+            }
+        }
     }
 
     fun stopPath() {
@@ -195,6 +213,7 @@ object Engine {
         i.action = CaptureService.ACTION_STOP
         c.startService(i)
         busy = false
+        Player.stop()
         stopPath()
     }
 

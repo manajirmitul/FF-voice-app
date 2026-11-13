@@ -2,6 +2,7 @@ package com.manajir.voicetest
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -13,6 +14,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.text.TextUtils
+import android.view.Gravity
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
@@ -25,7 +28,9 @@ class MainActivity : Activity() {
 
     private val reqProjection = 100
     private val reqPerms = 101
+    private val reqPick = 102
     private var updating = false
+    private var libStamp = ""
 
     private lateinit var dotShizuku: View
     private lateinit var dotPath: View
@@ -41,9 +46,12 @@ class MainActivity : Activity() {
     private lateinit var levelBar: ProgressBar
     private lateinit var logBox: LinearLayout
     private lateinit var logView: TextView
+    private lateinit var libList: LinearLayout
 
     private val changeListener: () -> Unit = { runOnUiThread { refresh() } }
     private val levelListener: (Int) -> Unit = { v -> runOnUiThread { levelBar.progress = v } }
+
+    private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +72,7 @@ class MainActivity : Activity() {
         levelBar = findViewById(R.id.levelBar)
         logBox = findViewById(R.id.logBox)
         logView = findViewById(R.id.logView)
+        libList = findViewById(R.id.libList)
 
         btnMain.setOnClickListener {
             if (Engine.captureOn || Engine.pathReady) Engine.stopAll(this) else startAll()
@@ -110,6 +119,13 @@ class MainActivity : Activity() {
             }
         }
 
+        findViewById<Button>(R.id.btnImport).setOnClickListener {
+            val i = Intent(Intent.ACTION_OPEN_DOCUMENT)
+            i.addCategory(Intent.CATEGORY_OPENABLE)
+            i.type = "audio/*"
+            i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+            startActivityForResult(i, reqPick)
+        }
         findViewById<Button>(R.id.btnTone).setOnClickListener { Engine.tone() }
         findViewById<Button>(R.id.btnLog).setOnClickListener {
             logBox.visibility = if (logBox.visibility == View.VISIBLE) View.GONE else View.VISIBLE
@@ -139,6 +155,70 @@ class MainActivity : Activity() {
         t.setTextColor(getColor(if (on) R.color.ok else R.color.muted))
     }
 
+    private fun smallBtn(label: String, action: () -> Unit): TextView {
+        val t = TextView(this)
+        t.text = label
+        t.setTextColor(getColor(R.color.text))
+        t.textSize = 14f
+        t.gravity = Gravity.CENTER
+        t.setPadding(dp(14), dp(8), dp(14), dp(8))
+        t.setBackgroundResource(R.drawable.bg_btn_ghost)
+        t.setOnClickListener { action() }
+        val lp = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        lp.marginStart = dp(8)
+        t.layoutParams = lp
+        return t
+    }
+
+    private fun rebuildLibrary() {
+        val stamp = "" + Library.version + "|" + Player.currentFile + "|" + Player.paused
+        if (stamp == libStamp) return
+        libStamp = stamp
+        libList.removeAllViews()
+
+        val files = Library.list(this)
+        if (files.isEmpty()) {
+            val empty = TextView(this)
+            empty.text = "লাইব্রেরি খালি"
+            empty.setTextColor(getColor(R.color.muted))
+            empty.textSize = 13f
+            empty.setPadding(0, dp(6), 0, dp(6))
+            libList.addView(empty)
+            return
+        }
+
+        for (f in files) {
+            val isCur = Player.playing && Player.currentFile == f
+            val row = LinearLayout(this)
+            row.orientation = LinearLayout.HORIZONTAL
+            row.gravity = Gravity.CENTER_VERTICAL
+            row.setPadding(0, dp(6), 0, dp(6))
+
+            val tv = TextView(this)
+            tv.text = Library.displayName(f)
+            tv.setTextColor(getColor(if (isCur) R.color.accent2 else R.color.text))
+            tv.textSize = 14f
+            tv.maxLines = 1
+            tv.ellipsize = TextUtils.TruncateAt.END
+            row.addView(tv, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+
+            row.addView(smallBtn(if (isCur && !Player.paused) "❚❚" else "▶") {
+                if (isCur) Player.togglePause() else Player.request(f)
+            })
+            if (isCur) row.addView(smallBtn("■") { Player.stop() })
+            row.addView(smallBtn("✕") {
+                AlertDialog.Builder(this)
+                    .setMessage("এই অডিও মুছে ফেলবেন?")
+                    .setPositiveButton("হ্যাঁ") { _, _ -> Library.delete(f) }
+                    .setNegativeButton("না", null)
+                    .show()
+            })
+            libList.addView(row)
+        }
+    }
+
     private fun refresh() {
         updating = true
         setRow(dotShizuku, tvShizuku, Engine.svc != null, "সংযুক্ত", "সংযুক্ত নয়")
@@ -165,6 +245,7 @@ class MainActivity : Activity() {
         if (sbGain.progress != p) sbGain.progress = p
         tvGain.text = "$p%"
         logView.text = Engine.logText()
+        rebuildLibrary()
         updating = false
     }
 
@@ -183,7 +264,13 @@ class MainActivity : Activity() {
             return
         }
         Engine.prepare { ok ->
-            if (ok) runOnUiThread { askProjection() }
+            if (ok) {
+                runOnUiThread {
+                    Engine.busy = true
+                    Engine.notifyChange()
+                    askProjection()
+                }
+            }
         }
     }
 
@@ -214,6 +301,25 @@ class MainActivity : Activity() {
             } else {
                 Engine.busy = false
                 Engine.log("গান ধরার অনুমতি দেওয়া হয়নি")
+            }
+        } else if (requestCode == reqPick) {
+            if (resultCode == RESULT_OK && data != null) {
+                val uris = ArrayList<Uri>()
+                val cd = data.clipData
+                if (cd != null) {
+                    for (i in 0 until cd.itemCount) uris.add(cd.getItemAt(i).uri)
+                } else {
+                    val single = data.data
+                    if (single != null) uris.add(single)
+                }
+                Thread {
+                    var count = 0
+                    for (u in uris) {
+                        if (Library.import(this@MainActivity, u)) count++
+                    }
+                    Engine.log("$count টি অডিও যোগ হয়েছে")
+                    Engine.notifyChange()
+                }.start()
             }
         }
     }

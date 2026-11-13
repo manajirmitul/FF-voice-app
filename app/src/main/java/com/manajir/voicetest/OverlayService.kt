@@ -10,6 +10,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.provider.Settings
+import android.text.TextUtils
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -18,6 +19,7 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import kotlin.math.abs
@@ -36,10 +38,17 @@ class OverlayService : Service() {
     private lateinit var bubble: TextView
     private lateinit var panel: LinearLayout
     private lateinit var tvStatus: TextView
+    private lateinit var tabCtrl: TextView
+    private lateinit var tabLib: TextView
+    private lateinit var ctrlSection: LinearLayout
+    private lateinit var libSection: LinearLayout
+    private lateinit var libList: LinearLayout
     private lateinit var btnMusic: TextView
+    private lateinit var btnPause: TextView
     private lateinit var tvGain: TextView
     private lateinit var sbGain: SeekBar
     private lateinit var level: ProgressBar
+    private var libStamp = ""
 
     private val changeListener: () -> Unit = { handler.post { refresh() } }
     private val levelListener: (Int) -> Unit = { v ->
@@ -72,9 +81,17 @@ class OverlayService : Service() {
         t.setTextColor(Color.WHITE)
         t.textSize = size
         t.gravity = Gravity.CENTER
-        t.setPadding(dp(10), dp(10), dp(10), dp(10))
+        t.setPadding(dp(10), dp(9), dp(10), dp(9))
         t.setBackgroundResource(bg)
         return t
+    }
+
+    private fun lpFull(top: Int): LinearLayout.LayoutParams {
+        val lp = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        lp.topMargin = dp(top)
+        return lp
     }
 
     private fun build() {
@@ -94,7 +111,7 @@ class OverlayService : Service() {
         panel.setBackgroundResource(R.drawable.bg_panel)
         panel.visibility = View.GONE
 
-        // header (drag handle)
+        // ---- header (drag handle) ----
         val header = LinearLayout(this)
         header.orientation = LinearLayout.HORIZONTAL
         header.gravity = Gravity.CENTER_VERTICAL
@@ -108,35 +125,59 @@ class OverlayService : Service() {
         title.typeface = Typeface.DEFAULT_BOLD
         tvStatus = TextView(this)
         tvStatus.textSize = 12f
+        tvStatus.maxLines = 1
+        tvStatus.ellipsize = TextUtils.TruncateAt.END
         tvStatus.setTextColor(0xFF8A94B2.toInt())
         titleBox.addView(title)
         titleBox.addView(tvStatus)
+
+        val home = TextView(this)
+        home.text = "⌂"
+        home.textSize = 20f
+        home.setTextColor(Color.WHITE)
+        home.gravity = Gravity.CENTER
+        home.setPadding(dp(10), 0, dp(6), 0)
+        home.setOnClickListener { openMainApp() }
 
         val minimize = TextView(this)
         minimize.text = "–"
         minimize.textSize = 24f
         minimize.setTextColor(Color.WHITE)
         minimize.gravity = Gravity.CENTER
-        minimize.setPadding(dp(14), 0, dp(4), 0)
+        minimize.setPadding(dp(10), 0, dp(2), 0)
         minimize.setOnClickListener { collapse() }
 
         header.addView(titleBox, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        header.addView(home)
         header.addView(minimize)
         panel.addView(header)
 
-        // music on/off
+        // ---- tabs ----
+        val tabs = LinearLayout(this)
+        tabs.orientation = LinearLayout.HORIZONTAL
+        tabCtrl = pill("কন্ট্রোল", R.drawable.bg_btn_primary, 14f)
+        tabLib = pill("লাইব্রেরি", R.drawable.bg_btn_ghost, 14f)
+        tabCtrl.setOnClickListener { selectTab(0) }
+        tabLib.setOnClickListener { selectTab(1) }
+        val lpT1 = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        lpT1.rightMargin = dp(4)
+        val lpT2 = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        lpT2.leftMargin = dp(4)
+        tabs.addView(tabCtrl, lpT1)
+        tabs.addView(tabLib, lpT2)
+        panel.addView(tabs, lpFull(10))
+
+        // ---- controls section ----
+        ctrlSection = LinearLayout(this)
+        ctrlSection.orientation = LinearLayout.VERTICAL
+
         btnMusic = pill("", R.drawable.bg_btn_primary, 15f)
         btnMusic.setOnClickListener {
             Engine.musicOn = !Engine.musicOn
             Engine.notifyChange()
         }
-        val lpMusic = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        lpMusic.topMargin = dp(12)
-        panel.addView(btnMusic, lpMusic)
+        ctrlSection.addView(btnMusic, lpFull(10))
 
-        // media keys
         val mediaRow = LinearLayout(this)
         mediaRow.orientation = LinearLayout.HORIZONTAL
         val keys = arrayOf("◀◀", "▶/❚❚", "▶▶")
@@ -156,13 +197,8 @@ class OverlayService : Service() {
             }
             mediaRow.addView(b, lp)
         }
-        val lpMedia = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        lpMedia.topMargin = dp(10)
-        panel.addView(mediaRow, lpMedia)
+        ctrlSection.addView(mediaRow, lpFull(8))
 
-        // volume
         val volRow = LinearLayout(this)
         volRow.orientation = LinearLayout.HORIZONTAL
         val volLabel = TextView(this)
@@ -174,11 +210,7 @@ class OverlayService : Service() {
         tvGain.textSize = 13f
         volRow.addView(volLabel, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         volRow.addView(tvGain)
-        val lpVol = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        lpVol.topMargin = dp(14)
-        panel.addView(volRow, lpVol)
+        ctrlSection.addView(volRow, lpFull(12))
 
         sbGain = SeekBar(this)
         sbGain.max = 200
@@ -197,29 +229,47 @@ class OverlayService : Service() {
             override fun onStartTrackingTouch(sb: SeekBar?) {}
             override fun onStopTrackingTouch(sb: SeekBar?) {}
         })
-        panel.addView(
-            sbGain,
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        )
+        ctrlSection.addView(sbGain, lpFull(0))
 
         level = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
         level.max = 100
         level.progressTintList = ColorStateList.valueOf(0xFF34D399.toInt())
         val lpLevel = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(5))
         lpLevel.topMargin = dp(6)
-        panel.addView(level, lpLevel)
+        ctrlSection.addView(level, lpLevel)
 
-        val openApp = pill("অ্যাপ খুলুন", R.drawable.bg_btn_ghost, 13f)
-        openApp.setOnClickListener { openMainApp() }
-        val lpOpen = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        lpOpen.topMargin = dp(12)
-        panel.addView(openApp, lpOpen)
+        panel.addView(ctrlSection)
 
-        container.addView(panel, FrameLayout.LayoutParams(dp(260), FrameLayout.LayoutParams.WRAP_CONTENT))
+        // ---- library section ----
+        libSection = LinearLayout(this)
+        libSection.orientation = LinearLayout.VERTICAL
+        libSection.visibility = View.GONE
+
+        val libTop = LinearLayout(this)
+        libTop.orientation = LinearLayout.HORIZONTAL
+        btnPause = pill("▶ / ❚❚", R.drawable.bg_btn_ghost, 14f)
+        btnPause.setOnClickListener { Player.togglePause() }
+        val btnStop = pill("■ বন্ধ", R.drawable.bg_btn_ghost, 14f)
+        btnStop.setOnClickListener { Player.stop() }
+        val lpA = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        lpA.rightMargin = dp(4)
+        val lpB = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        lpB.leftMargin = dp(4)
+        libTop.addView(btnPause, lpA)
+        libTop.addView(btnStop, lpB)
+        libSection.addView(libTop, lpFull(10))
+
+        libList = LinearLayout(this)
+        libList.orientation = LinearLayout.VERTICAL
+        val sv = ScrollView(this)
+        sv.addView(libList)
+        val lpSv = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(150))
+        lpSv.topMargin = dp(8)
+        libSection.addView(sv, lpSv)
+
+        panel.addView(libSection)
+
+        container.addView(panel, FrameLayout.LayoutParams(dp(280), FrameLayout.LayoutParams.WRAP_CONTENT))
 
         params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -230,11 +280,19 @@ class OverlayService : Service() {
         )
         params.gravity = Gravity.TOP or Gravity.START
         params.x = dp(10)
-        params.y = dp(180)
+        params.y = dp(120)
         wm.addView(container, params)
 
         makeDraggable(bubble) { expand() }
         makeDraggable(titleBox, null)
+    }
+
+    private fun selectTab(i: Int) {
+        ctrlSection.visibility = if (i == 0) View.VISIBLE else View.GONE
+        libSection.visibility = if (i == 1) View.VISIBLE else View.GONE
+        tabCtrl.setBackgroundResource(if (i == 0) R.drawable.bg_btn_primary else R.drawable.bg_btn_ghost)
+        tabLib.setBackgroundResource(if (i == 1) R.drawable.bg_btn_primary else R.drawable.bg_btn_ghost)
+        updateLayout()
     }
 
     private fun makeDraggable(handle: View, onClick: (() -> Unit)?) {
@@ -281,9 +339,12 @@ class OverlayService : Service() {
     private fun expand() {
         bubble.visibility = View.GONE
         panel.visibility = View.VISIBLE
-        val maxX = resources.displayMetrics.widthPixels - dp(270)
+        val maxX = resources.displayMetrics.widthPixels - dp(290)
         if (params.x > maxX) params.x = maxX
         if (params.x < 0) params.x = 0
+        val maxY = resources.displayMetrics.heightPixels - dp(330)
+        if (params.y > maxY) params.y = maxY
+        if (params.y < 0) params.y = 0
         updateLayout()
     }
 
@@ -299,6 +360,44 @@ class OverlayService : Service() {
         startActivity(i)
     }
 
+    private fun rebuildLibrary() {
+        val stamp = "" + Library.version + "|" + Player.currentFile + "|" + Player.paused
+        if (stamp == libStamp) return
+        libStamp = stamp
+        libList.removeAllViews()
+
+        val files = Library.list(this)
+        if (files.isEmpty()) {
+            val empty = TextView(this)
+            empty.text = "লাইব্রেরি খালি। অ্যাপ থেকে অডিও যোগ করুন"
+            empty.setTextColor(0xFF8A94B2.toInt())
+            empty.textSize = 13f
+            empty.setPadding(dp(4), dp(10), dp(4), dp(10))
+            libList.addView(empty)
+            return
+        }
+        for (f in files) {
+            val isCur = Player.playing && Player.currentFile == f
+            val tv = TextView(this)
+            val mark = if (isCur) (if (Player.paused) "❚❚  " else "▶  ") else "♪  "
+            tv.text = mark + Library.displayName(f)
+            tv.setTextColor(if (isCur) 0xFF22D3EE.toInt() else Color.WHITE)
+            tv.textSize = 14f
+            tv.maxLines = 1
+            tv.ellipsize = TextUtils.TruncateAt.END
+            tv.setPadding(dp(8), dp(10), dp(8), dp(10))
+            tv.setOnClickListener {
+                if (isCur) Player.togglePause() else Player.request(f)
+            }
+            libList.addView(
+                tv,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            )
+        }
+    }
+
     private fun refresh() {
         if (!this::container.isInitialized) return
         val ready = Engine.pathReady
@@ -307,7 +406,9 @@ class OverlayService : Service() {
         else R.drawable.bg_bubble_muted
         bubble.setBackgroundResource(bg)
 
-        tvStatus.text = if (!ready) "বন্ধ। অ্যাপ থেকে শুরু করুন"
+        val cur = Player.currentFile
+        tvStatus.text = if (Player.playing && cur != null) "চলছে: " + Library.displayName(cur)
+        else if (!ready) "বন্ধ। লাইব্রেরি থেকে বাজালে নিজে চালু হবে"
         else if (Engine.musicOn) "গান মাইকে যাচ্ছে"
         else "গান বন্ধ। আপনার কথা যাচ্ছে"
 
@@ -315,10 +416,12 @@ class OverlayService : Service() {
         btnMusic.setBackgroundResource(
             if (Engine.musicOn) R.drawable.bg_btn_primary else R.drawable.bg_btn_ghost
         )
+        btnPause.text = if (Player.playing && !Player.paused) "❚❚ পজ" else "▶ চালু"
 
         val p = (Engine.gain * 100).toInt()
         if (sbGain.progress != p) sbGain.progress = p
         tvGain.text = "$p%"
+        rebuildLibrary()
     }
 
     override fun onDestroy() {

@@ -17,7 +17,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import java.io.IOException
 import kotlin.math.abs
 
 class CaptureService : Service() {
@@ -130,8 +129,7 @@ class CaptureService : Service() {
                         }
                         Engine.emitLevel((peak * 100 / 32767).coerceAtMost(100))
 
-                        val out = Engine.sink
-                        if (out != null && Engine.musicOn) {
+                        if (Engine.musicOn && !Player.playing && Engine.sink != null) {
                             val g = Engine.gain
                             val bytes = ByteArray(n * 2)
                             for (i in 0 until n) {
@@ -141,12 +139,7 @@ class CaptureService : Service() {
                                 bytes[2 * i] = (s and 0xff).toByte()
                                 bytes[2 * i + 1] = (s shr 8).toByte()
                             }
-                            try {
-                                out.write(bytes)
-                            } catch (e: IOException) {
-                                if (Engine.sink === out) Engine.sink = null
-                                Engine.log("পাইপ ভেঙে গেছে: মাইক সার্ভিস আর পড়ছে না")
-                            }
+                            Engine.writeSink(bytes, bytes.size)
                         }
                     }
                 }
