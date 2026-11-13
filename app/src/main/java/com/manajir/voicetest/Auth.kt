@@ -74,21 +74,21 @@ object Auth {
     }
 
     private fun friendly(code: String): String = when {
-        code.startsWith("EMAIL_EXISTS") -> "এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে"
+        code.startsWith("EMAIL_EXISTS") -> Lang.en(R.string.a_email_exists)
         code.startsWith("INVALID_LOGIN_CREDENTIALS") ||
             code.startsWith("INVALID_PASSWORD") ||
-            code.startsWith("EMAIL_NOT_FOUND") -> "ইমেইল বা পাসওয়ার্ড ভুল"
-        code.startsWith("WEAK_PASSWORD") -> "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের দিন"
-        code.startsWith("INVALID_EMAIL") -> "ইমেইলটি সঠিক নয়"
-        code.startsWith("MISSING_PASSWORD") -> "পাসওয়ার্ড লিখুন"
-        code.startsWith("TOO_MANY_ATTEMPTS") -> "অনেকবার চেষ্টা হয়েছে। কিছুক্ষণ পরে আবার চেষ্টা করুন"
-        code.startsWith("USER_DISABLED") -> "এই অ্যাকাউন্ট বন্ধ করা হয়েছে"
+            code.startsWith("EMAIL_NOT_FOUND") -> Lang.en(R.string.a_bad_creds)
+        code.startsWith("WEAK_PASSWORD") -> Lang.en(R.string.a_weak)
+        code.startsWith("INVALID_EMAIL") -> Lang.en(R.string.a_bad_email)
+        code.startsWith("MISSING_PASSWORD") -> Lang.en(R.string.a_missing_pass)
+        code.startsWith("TOO_MANY_ATTEMPTS") -> Lang.en(R.string.a_too_many)
+        code.startsWith("USER_DISABLED") -> Lang.en(R.string.a_disabled)
         code.startsWith("OPERATION_NOT_ALLOWED") ||
             code.startsWith("PASSWORD_LOGIN_DISABLED") ->
-            "Firebase-এ Email/Password সাইন-ইন চালু করা হয়নি"
+            Lang.en(R.string.a_not_enabled)
         code.startsWith("API key not valid") || code.startsWith("API_KEY") ->
-            "API Key ভুল। Config.kt-তে সঠিক key বসান"
-        else -> "ত্রুটি: $code"
+            Lang.en(R.string.a_bad_key)
+        else -> Lang.en(R.string.error_fmt, code)
     }
 
     private fun runAsync(block: () -> Unit, cb: (String?) -> Unit) {
@@ -99,9 +99,9 @@ object Auth {
             } catch (e: ApiError) {
                 friendly(e.code)
             } catch (e: IOException) {
-                "ইন্টারনেট সংযোগ নেই বা খুব ধীর"
+                Lang.en(R.string.a_no_internet)
             } catch (e: Exception) {
-                "ত্রুটি: " + e.javaClass.simpleName
+                Lang.en(R.string.error_fmt, e.javaClass.simpleName)
             }
             main.post { cb(err) }
         }.start()

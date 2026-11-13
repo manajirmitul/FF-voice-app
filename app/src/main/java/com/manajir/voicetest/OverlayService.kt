@@ -57,6 +57,10 @@ class OverlayService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(Lang.wrap(newBase))
+    }
+
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
     override fun onCreate() {
@@ -155,8 +159,8 @@ class OverlayService : Service() {
         // ---- tabs ----
         val tabs = LinearLayout(this)
         tabs.orientation = LinearLayout.HORIZONTAL
-        tabCtrl = pill("কন্ট্রোল", R.drawable.bg_btn_primary, 14f)
-        tabLib = pill("লাইব্রেরি", R.drawable.bg_btn_ghost, 14f)
+        tabCtrl = pill(getString(R.string.tab_controls), R.drawable.bg_btn_primary, 14f)
+        tabLib = pill(getString(R.string.tab_library), R.drawable.bg_btn_ghost, 14f)
         tabCtrl.setOnClickListener { selectTab(0) }
         tabLib.setOnClickListener { selectTab(1) }
         val lpT1 = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
@@ -202,7 +206,7 @@ class OverlayService : Service() {
         val volRow = LinearLayout(this)
         volRow.orientation = LinearLayout.HORIZONTAL
         val volLabel = TextView(this)
-        volLabel.text = "গানের ভলিউম"
+        volLabel.text = getString(R.string.music_volume)
         volLabel.setTextColor(Color.WHITE)
         volLabel.textSize = 13f
         tvGain = TextView(this)
@@ -249,7 +253,7 @@ class OverlayService : Service() {
         libTop.orientation = LinearLayout.HORIZONTAL
         btnPause = pill("▶ / ❚❚", R.drawable.bg_btn_ghost, 14f)
         btnPause.setOnClickListener { Player.togglePause() }
-        val btnStop = pill("■ বন্ধ", R.drawable.bg_btn_ghost, 14f)
+        val btnStop = pill("■ " + getString(R.string.stop), R.drawable.bg_btn_ghost, 14f)
         btnStop.setOnClickListener { Player.stop() }
         val lpA = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         lpA.rightMargin = dp(4)
@@ -369,7 +373,7 @@ class OverlayService : Service() {
         val files = Library.list(this)
         if (files.isEmpty()) {
             val empty = TextView(this)
-            empty.text = "লাইব্রেরি খালি। অ্যাপ থেকে অডিও যোগ করুন"
+            empty.text = getString(R.string.library_empty_overlay)
             empty.setTextColor(0xFF8A94B2.toInt())
             empty.textSize = 13f
             empty.setPadding(dp(4), dp(10), dp(4), dp(10))
@@ -407,16 +411,16 @@ class OverlayService : Service() {
         bubble.setBackgroundResource(bg)
 
         val cur = Player.currentFile
-        tvStatus.text = if (Player.playing && cur != null) "চলছে: " + Library.displayName(cur)
-        else if (!ready) "বন্ধ। লাইব্রেরি থেকে বাজালে নিজে চালু হবে"
-        else if (Engine.musicOn) "গান মাইকে যাচ্ছে"
-        else "গান বন্ধ। আপনার কথা যাচ্ছে"
+        tvStatus.text = if (Player.playing && cur != null) getString(R.string.playing_fmt, Library.displayName(cur))
+        else if (!ready) getString(R.string.status_off)
+        else if (Engine.musicOn) getString(R.string.status_music_to_mic)
+        else getString(R.string.status_music_off)
 
-        btnMusic.text = if (Engine.musicOn) "গান: চালু" else "গান: বন্ধ"
+        btnMusic.text = getString(if (Engine.musicOn) R.string.music_on else R.string.music_off)
         btnMusic.setBackgroundResource(
             if (Engine.musicOn) R.drawable.bg_btn_primary else R.drawable.bg_btn_ghost
         )
-        btnPause.text = if (Player.playing && !Player.paused) "❚❚ পজ" else "▶ চালু"
+        btnPause.text = if (Player.playing && !Player.paused) "❚❚ " + getString(R.string.pause_label) else "▶ " + getString(R.string.play_label)
 
         val p = (Engine.gain * 100).toInt()
         if (sbGain.progress != p) sbGain.progress = p

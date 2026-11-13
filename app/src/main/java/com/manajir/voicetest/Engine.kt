@@ -72,7 +72,7 @@ object Engine {
             if (result == PackageManager.PERMISSION_GRANTED) {
                 bind()
             } else {
-                log("Shizuku পারমিশন দেওয়া হয়নি")
+                log(Lang.get(R.string.shizuku_perm_denied))
                 finish(false)
             }
         }
@@ -81,14 +81,14 @@ object Engine {
     private val conn = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
             svc = IMicService.Stub.asInterface(binder)
-            log("Shizuku সার্ভিস সংযুক্ত")
+            log(Lang.get(R.string.shizuku_service_connected))
             if (pending != null) startPath() else notifyChange()
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
             svc = null
             pathReady = false
-            log("Shizuku সার্ভিস বিচ্ছিন্ন হয়েছে। বন্ধ করে আবার শুরু করুন")
+            log(Lang.get(R.string.shizuku_service_disconnected))
         }
     }
 
@@ -98,7 +98,7 @@ object Engine {
             .daemon(false)
             .processNameSuffix("mic")
             .debuggable(false)
-            .version(3)
+            .version(4)
     }
 
     /** Connects Shizuku (if needed) and builds the virtual mic path. */
@@ -108,7 +108,7 @@ object Engine {
         notifyChange()
         Handler(Looper.getMainLooper()).postDelayed({
             if (pending != null) {
-                log("সময় শেষ: সংযোগ হয়নি। Shizuku চালু আছে কিনা দেখুন")
+                log(Lang.get(R.string.timeout_connect))
                 finish(false)
             }
         }, 25000)
@@ -119,7 +119,7 @@ object Engine {
         }
         try {
             if (!Shizuku.pingBinder()) {
-                log("Shizuku চালু নেই। Shizuku অ্যাপ খুলে চালু করুন")
+                log(Lang.get(R.string.shizuku_not_running))
                 finish(false)
                 return
             }
@@ -129,7 +129,7 @@ object Engine {
                 Shizuku.requestPermission(REQ_SHIZUKU)
             }
         } catch (e: Throwable) {
-            log("Shizuku ত্রুটি: $e")
+            log(Lang.get(R.string.shizuku_error, e.toString()))
             finish(false)
         }
     }
@@ -137,9 +137,9 @@ object Engine {
     private fun bind() {
         try {
             Shizuku.bindUserService(args(), conn)
-            log("সার্ভিস চালু করা হচ্ছে...")
+            log(Lang.get(R.string.starting_service))
         } catch (e: Throwable) {
-            log("bind ত্রুটি: $e")
+            log(Lang.get(R.string.bind_error, e.toString()))
             finish(false)
         }
     }
@@ -163,7 +163,7 @@ object Engine {
                 log(res)
             } catch (e: Throwable) {
                 pathReady = false
-                log("পাথ ত্রুটি: $e")
+                log(Lang.get(R.string.path_error, e.toString()))
             }
             finish(pathReady)
         }.start()
@@ -188,7 +188,7 @@ object Engine {
                 return true
             } catch (e: IOException) {
                 if (sink === out) sink = null
-                log("পাইপ ভেঙে গেছে: মাইক সার্ভিস আর পড়ছে না")
+                log(Lang.get(R.string.pipe_broken))
                 return false
             }
         }
@@ -202,7 +202,7 @@ object Engine {
         if (s != null) {
             Thread {
                 try { s.stop() } catch (_: Throwable) {}
-                log("মাইক পাথ বন্ধ")
+                log(Lang.get(R.string.mic_path_closed))
             }.start()
         }
         notifyChange()
@@ -220,24 +220,31 @@ object Engine {
     fun tone() {
         val s = svc
         if (s == null) {
-            log("আগে শুরু করুন")
+            log(Lang.get(R.string.start_first))
             return
         }
         Thread {
-            val r = try { s.tone(3) } catch (e: Throwable) { "ত্রুটি: $e" }
-            log(r)
+            val r = try { s.tone(3) } catch (e: Throwable) { Lang.get(R.string.error_fmt, e.toString()) }
+            log(
+                when {
+                    r == "ERR_NO_PATH" -> Lang.get(R.string.start_mic_path_first)
+                    r.startsWith("TONE_SENDING:") ->
+                        Lang.get(R.string.tone_sending, r.substringAfter(':').toIntOrNull() ?: 3)
+                    else -> r
+                }
+            )
         }.start()
     }
 
     fun fetchServiceLog() {
         val s = svc
         if (s == null) {
-            log("সার্ভিস সংযুক্ত নেই")
+            log(Lang.get(R.string.service_not_connected))
             return
         }
         Thread {
-            val t = try { s.lastLog() } catch (e: Throwable) { "লগ পড়া যায়নি: $e" }
-            log("সার্ভিস লগ:\n" + t)
+            val t = try { s.lastLog() } catch (e: Throwable) { Lang.get(R.string.log_read_failed, e.toString()) }
+            log(Lang.get(R.string.service_log) + ":\n" + t)
         }.start()
     }
 

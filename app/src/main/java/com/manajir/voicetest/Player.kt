@@ -55,7 +55,7 @@ object Player {
             play(f)
         } else {
             if (Engine.busy) return
-            Engine.log("মাইক পাথ চালু হচ্ছে...")
+            Engine.log(Lang.get(R.string.mic_path_starting))
             Engine.prepare { ok -> if (ok) play(f) }
         }
     }
@@ -71,7 +71,7 @@ object Player {
             try {
                 decode(f, my)
             } catch (e: Throwable) {
-                Engine.log("প্লে ত্রুটি: $e")
+                Engine.log(Lang.get(R.string.play_error, e.toString()))
             }
             synchronized(Player) {
                 if (token == my) {
@@ -121,7 +121,7 @@ object Player {
                 }
             }
             val fmt: MediaFormat = found ?: run {
-                Engine.log("এই ফাইলে অডিও পাওয়া যায়নি")
+                Engine.log(Lang.get(R.string.no_audio_in_file))
                 return
             }
             ex.selectTrack(idx)
@@ -206,7 +206,7 @@ object Player {
                     resR = Resampler(inRate.toDouble() / outRate)
                     val enc = nf.intOr(MediaFormat.KEY_PCM_ENCODING, AudioFormat.ENCODING_PCM_16BIT)
                     if (enc != AudioFormat.ENCODING_PCM_16BIT) {
-                        Engine.log("এই ফাইলের অডিও ফরম্যাট সমর্থিত নয়")
+                        Engine.log(Lang.get(R.string.audio_format_unsupported))
                         break
                     }
                 }

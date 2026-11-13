@@ -265,7 +265,7 @@ class MicService(private var ctx: Context?) : IMicService.Stub() {
     }
 
     override fun tone(seconds: Int): String {
-        val t = track ?: return "আগে মাইক পাথ চালু করুন"
+        val t = track ?: return "ERR_NO_PATH"
         crumb("tone requested")
         Thread {
             try {
@@ -289,7 +289,7 @@ class MicService(private var ctx: Context?) : IMicService.Stub() {
                 crumb("tone error: " + err(e))
             }
         }.start()
-        return "টোন পাঠানো হচ্ছে ($seconds সেকেন্ড)"
+        return "TONE_SENDING:$seconds"
     }
 
     override fun stop() {

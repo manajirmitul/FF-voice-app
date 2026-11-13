@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="login">Log in</string>
+    <string name="new_account">New account</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="confirm_hint">Confirm password</string>
+    <string name="sub_login">Log in to get started</string>
+    <string name="sub_register">Create a new account</string>
+    <string name="create_account">Create account</string>
+    <string name="please_wait">Please wait...</string>
+    <string name="forgot">Forgot password?</string>
+    <string name="key_missing">API key is missing. Put the Firebase Web API key in Config.kt</string>
+    <string name="enter_valid_email">Enter a valid email</string>
+    <string name="pass_min">Password must be at least 6 characters</string>
+    <string name="pass_mismatch">The two passwords do not match</string>
+    <string name="enter_email_first">Enter your email in the field above first</string>
+    <string name="reset_sent">A password reset link was sent to your email. Check your spam folder too</string>
+    <string name="a_email_exists">An account with this email already exists</string>
+    <string name="a_bad_creds">Wrong email or password</string>
+    <string name="a_weak">Password must be at least 6 characters</string>
+    <string name="a_bad_email">This email is not valid</string>
+    <string name="a_missing_pass">Enter your password</string>
+    <string name="a_too_many">Too many attempts. Try again in a little while</string>
+    <string name="a_disabled">This account has been disabled</string>
+    <string name="a_not_enabled">Email/Password sign-in is not enabled in Firebase</string>
+    <string name="a_bad_key">The API key is wrong. Put the correct key in Config.kt</string>
+    <string name="a_no_internet">No internet connection, or it is too slow</string>
+</resources>

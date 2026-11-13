@@ -26,6 +26,10 @@ import android.widget.TextView
 
 class MainActivity : Activity() {
 
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(Lang.wrap(base))
+    }
+
     private val reqProjection = 100
     private val reqPerms = 101
     private val reqPick = 102
@@ -117,7 +121,7 @@ class MainActivity : Activity() {
                                 Uri.parse("package:$packageName")
                             )
                         )
-                        Engine.log("'অন্য অ্যাপের ওপরে দেখান' অনুমতি দিয়ে ফিরে এসে আবার চালু করুন")
+                        Engine.log(getString(R.string.overlay_perm_log))
                         refresh()
                     }
                 } else {
@@ -140,10 +144,19 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.btnCopy).setOnClickListener {
             val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             cm.setPrimaryClip(ClipData.newPlainText("log", Engine.logText()))
-            Engine.log("লগ কপি হয়েছে")
+            Engine.log(getString(R.string.log_copied))
         }
         findViewById<Button>(R.id.btnSvcLog).setOnClickListener { Engine.fetchServiceLog() }
 
+        findViewById<TextView>(R.id.btnLang).setOnClickListener {
+            Lang.showPicker(this, true) {
+                if (OverlayService.running) {
+                    stopService(Intent(this, OverlayService::class.java))
+                    startService(Intent(this, OverlayService::class.java))
+                }
+                recreate()
+            }
+        }
         findViewById<TextView>(R.id.tvUser).text = Auth.email(this)
         findViewById<TextView>(R.id.btnLogout).setOnClickListener { doLogout() }
         if (!Auth.keyMissing()) {
@@ -204,7 +217,7 @@ class MainActivity : Activity() {
         val files = Library.list(this)
         if (files.isEmpty()) {
             val empty = TextView(this)
-            empty.text = "লাইব্রেরি খালি"
+            empty.text = getString(R.string.library_empty)
             empty.setTextColor(getColor(R.color.muted))
             empty.textSize = 13f
             empty.setPadding(0, dp(6), 0, dp(6))
@@ -233,9 +246,9 @@ class MainActivity : Activity() {
             if (isCur) row.addView(smallBtn("■") { Player.stop() })
             row.addView(smallBtn("✕") {
                 AlertDialog.Builder(this)
-                    .setMessage("এই অডিও মুছে ফেলবেন?")
-                    .setPositiveButton("হ্যাঁ") { _, _ -> Library.delete(f) }
-                    .setNegativeButton("না", null)
+                    .setMessage(getString(R.string.delete_audio_q))
+                    .setPositiveButton(getString(R.string.yes)) { _, _ -> Library.delete(f) }
+                    .setNegativeButton(getString(R.string.no), null)
                     .show()
             })
             libList.addView(row)
@@ -244,20 +257,20 @@ class MainActivity : Activity() {
 
     private fun refresh() {
         updating = true
-        setRow(dotShizuku, tvShizuku, Engine.svc != null, "সংযুক্ত", "সংযুক্ত নয়")
-        setRow(dotPath, tvPath, Engine.pathReady, "প্রস্তুত", "বন্ধ")
-        setRow(dotCapture, tvCapture, Engine.captureOn, "গান ধরছে", "বন্ধ")
+        setRow(dotShizuku, tvShizuku, Engine.svc != null, getString(R.string.connected), getString(R.string.not_connected))
+        setRow(dotPath, tvPath, Engine.pathReady, getString(R.string.ready), getString(R.string.off))
+        setRow(dotCapture, tvCapture, Engine.captureOn, getString(R.string.capturing_music), getString(R.string.off))
 
         val running = Engine.captureOn || Engine.pathReady
         if (Engine.busy) {
-            btnMain.text = "অপেক্ষা করুন..."
+            btnMain.text = getString(R.string.wait)
             btnMain.isEnabled = false
         } else if (running) {
-            btnMain.text = "বন্ধ করুন"
+            btnMain.text = getString(R.string.stop)
             btnMain.setBackgroundResource(R.drawable.bg_btn_danger)
             btnMain.isEnabled = true
         } else {
-            btnMain.text = "শুরু করুন"
+            btnMain.text = getString(R.string.start)
             btnMain.setBackgroundResource(R.drawable.bg_btn_primary)
             btnMain.isEnabled = true
         }
@@ -302,7 +315,7 @@ class MainActivity : Activity() {
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             startAll()
         } else {
-            Engine.log("মাইক্রোফোন পারমিশন দরকার")
+            Engine.log(getString(R.string.mic_perm_needed))
         }
     }
 
@@ -323,7 +336,7 @@ class MainActivity : Activity() {
                 startForegroundService(i)
             } else {
                 Engine.busy = false
-                Engine.log("গান ধরার অনুমতি দেওয়া হয়নি")
+                Engine.log(getString(R.string.capture_perm_denied))
             }
         } else if (requestCode == reqPick) {
             if (resultCode == RESULT_OK && data != null) {
@@ -340,7 +353,7 @@ class MainActivity : Activity() {
                     for (u in uris) {
                         if (Library.import(this@MainActivity, u)) count++
                     }
-                    Engine.log("$count টি অডিও যোগ হয়েছে")
+                    Engine.log(getString(R.string.audios_added, count))
                     Engine.notifyChange()
                 }.start()
             }

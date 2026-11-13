@@ -53,7 +53,7 @@ class CaptureService : Service() {
                 intent.getParcelableExtra(EXTRA_DATA)
             }
             if (data == null) {
-                Engine.log("অনুমতির তথ্য পাওয়া যায়নি")
+                Engine.log(Lang.get(R.string.permission_data_missing))
                 Engine.busy = false
                 Engine.notifyChange()
                 stopSelf()
@@ -71,7 +71,7 @@ class CaptureService : Service() {
         )
         val notification = Notification.Builder(this, CHANNEL_ID)
             .setContentTitle("FF Voice")
-            .setContentText("ফোনের গান মাইকে পাঠানো হচ্ছে")
+            .setContentText(Lang.get(R.string.notif_text))
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .build()
         startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
@@ -115,7 +115,7 @@ class CaptureService : Service() {
             running = true
             Engine.captureOn = true
             Engine.busy = false
-            Engine.log("গান ধরা শুরু হয়েছে। এখন মিউজিক অ্যাপে গান চালান")
+            Engine.log(Lang.get(R.string.capture_started))
 
             worker = Thread {
                 val buf = ShortArray(2048)
@@ -145,7 +145,7 @@ class CaptureService : Service() {
                 }
             }.also { it.start() }
         } catch (e: Exception) {
-            Engine.log("ত্রুটি: " + e.javaClass.simpleName + " " + (e.message ?: ""))
+            Engine.log(Lang.get(R.string.error_fmt, e.javaClass.simpleName + " " + (e.message ?: "")))
             Engine.busy = false
             Engine.captureOn = false
             Engine.notifyChange()
@@ -165,7 +165,7 @@ class CaptureService : Service() {
         if (was) {
             Engine.captureOn = false
             Engine.emitLevel(0)
-            Engine.log("গান ধরা বন্ধ")
+            Engine.log(Lang.get(R.string.capture_stopped))
         }
     }
 

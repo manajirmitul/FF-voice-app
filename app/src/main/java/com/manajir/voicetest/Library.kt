@@ -52,7 +52,7 @@ object Library {
             version++
             return true
         } catch (e: Throwable) {
-            Engine.log("আমদানি ত্রুটি: $e")
+            Engine.log(Lang.get(R.string.import_error, e.toString()))
             return false
         }
     }

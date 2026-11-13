@@ -1,6 +1,7 @@
 package com.manajir.voicetest
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
@@ -21,9 +22,15 @@ class LoginActivity : Activity() {
     private lateinit var tvSub: TextView
     private lateinit var btnSubmit: Button
 
+    // The login and registration screens are always English.
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(Lang.wrapEnglish(base))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (Auth.isLoggedIn(this)) {
+        val logged = Auth.isLoggedIn(this)
+        if (logged && !Lang.pending()) {
             goMain()
             return
         }
@@ -42,6 +49,18 @@ class LoginActivity : Activity() {
         tabRegister.setOnClickListener { setMode(true) }
         btnSubmit.setOnClickListener { submit() }
         findViewById<TextView>(R.id.tvForgot).setOnClickListener { forgot() }
+
+        // Logged in but the language was not picked yet (e.g. the screen was recreated)
+        if (logged) pickLanguage()
+    }
+
+    /** After a successful login/registration: choose the app language, then open the app. */
+    private fun pickLanguage() {
+        Lang.setPending(true)
+        Lang.showPicker(this, false) {
+            Lang.setPending(false)
+            goMain()
+        }
     }
 
     private fun goMain() {
@@ -56,8 +75,8 @@ class LoginActivity : Activity() {
         tabLogin.setBackgroundResource(if (register) R.drawable.bg_btn_ghost else R.drawable.bg_btn_primary)
         tabRegister.setBackgroundResource(if (register) R.drawable.bg_btn_primary else R.drawable.bg_btn_ghost)
         etConfirm.visibility = if (register) android.view.View.VISIBLE else android.view.View.GONE
-        btnSubmit.text = if (register) "অ্যাকাউন্ট খুলুন" else "লগইন"
-        tvSub.text = if (register) "নতুন অ্যাকাউন্ট খুলুন" else "লগইন করে শুরু করুন"
+        btnSubmit.text = getString(if (register) R.string.create_account else R.string.login)
+        tvSub.text = getString(if (register) R.string.sub_register else R.string.sub_login)
         tvMsg.visibility = android.view.View.GONE
     }
 
@@ -69,8 +88,8 @@ class LoginActivity : Activity() {
 
     private fun setLoading(loading: Boolean) {
         btnSubmit.isEnabled = !loading
-        btnSubmit.text = if (loading) "অপেক্ষা করুন..."
-        else if (registerMode) "অ্যাকাউন্ট খুলুন" else "লগইন"
+        btnSubmit.text = if (loading) getString(R.string.please_wait)
+        else getString(if (registerMode) R.string.create_account else R.string.login)
     }
 
     private fun submit() {
@@ -78,19 +97,19 @@ class LoginActivity : Activity() {
         val pass = etPass.text.toString()
 
         if (Auth.keyMissing()) {
-            showMsg("API Key বসানো হয়নি। Config.kt ফাইলে Firebase Web API Key বসান", true)
+            showMsg(getString(R.string.key_missing), true)
             return
         }
         if (!email.contains("@") || !email.contains(".")) {
-            showMsg("সঠিক ইমেইল লিখুন", true)
+            showMsg(getString(R.string.enter_valid_email), true)
             return
         }
         if (pass.length < 6) {
-            showMsg("পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের দিন", true)
+            showMsg(getString(R.string.pass_min), true)
             return
         }
         if (registerMode && pass != etConfirm.text.toString()) {
-            showMsg("দুটো পাসওয়ার্ড মিলছে না", true)
+            showMsg(getString(R.string.pass_mismatch), true)
             return
         }
 
@@ -98,7 +117,7 @@ class LoginActivity : Activity() {
         setLoading(true)
         val done: (String?) -> Unit = { err ->
             setLoading(false)
-            if (err == null) goMain() else showMsg(err, true)
+            if (err == null) pickLanguage() else showMsg(err, true)
         }
         if (registerMode) Auth.signUp(this, email, pass, done)
         else Auth.signIn(this, email, pass, done)
@@ -107,15 +126,15 @@ class LoginActivity : Activity() {
     private fun forgot() {
         val email = etEmail.text.toString().trim()
         if (Auth.keyMissing()) {
-            showMsg("API Key বসানো হয়নি। Config.kt ফাইলে Firebase Web API Key বসান", true)
+            showMsg(getString(R.string.key_missing), true)
             return
         }
         if (!email.contains("@")) {
-            showMsg("আগে ওপরের ঘরে আপনার ইমেইল লিখুন", true)
+            showMsg(getString(R.string.enter_email_first), true)
             return
         }
         Auth.resetPassword(email) { err ->
-            if (err == null) showMsg("পাসওয়ার্ড রিসেটের লিংক ইমেইলে পাঠানো হয়েছে। স্প্যাম ফোল্ডারও দেখুন", false)
+            if (err == null) showMsg(getString(R.string.reset_sent), false)
             else showMsg(err, true)
         }
     }

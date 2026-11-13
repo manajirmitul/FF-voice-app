@@ -24,7 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="ফোনের গান সরাসরি গেমের মাইকে"
+            android:text="@string/tagline"
             android:textColor="@color/muted"
             android:textSize="14sp" />
 
@@ -46,11 +46,20 @@
                 android:textSize="12sp" />
 
             <TextView
+                android:id="@+id/btnLang"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:text="@string/language"
+                android:textColor="@color/accent2"
+                android:textSize="13sp" />
+
+            <TextView
                 android:id="@+id/btnLogout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="8dp"
-                android:text="লগআউট"
+                android:text="@string/logout"
                 android:textColor="@color/accent2"
                 android:textSize="13sp" />
         </LinearLayout>
@@ -93,7 +102,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
                     android:layout_weight="1"
-                    android:text="মাইক পাথ"
+                    android:text="@string/mic_path"
                     android:textColor="@color/text"
                     android:textSize="15sp" />
                 <TextView android:id="@+id/tvPath" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/muted" android:textSize="14sp" />
@@ -111,7 +120,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="12dp"
                     android:layout_weight="1"
-                    android:text="গান ধরা"
+                    android:text="@string/music_capture"
                     android:textColor="@color/text"
                     android:textSize="15sp" />
                 <TextView android:id="@+id/tvCapture" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/muted" android:textSize="14sp" />
@@ -125,7 +134,7 @@
             android:layout_marginTop="18dp"
             android:background="@drawable/bg_btn_primary"
             android:stateListAnimator="@null"
-            android:text="শুরু করুন"
+            android:text="@string/start"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
             android:textSize="18sp"
@@ -144,7 +153,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="true"
-                android:text="গান মাইকে পাঠান"
+                android:text="@string/send_music"
                 android:textColor="@color/text"
                 android:textSize="16sp" />
 
@@ -152,7 +161,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="বন্ধ করলে আপনার নিজের কথা বন্ধুদের কাছে যাবে"
+                android:text="@string/send_music_hint"
                 android:textColor="@color/muted"
                 android:textSize="12sp" />
 
@@ -165,7 +174,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="গানের ভলিউম"
+                    android:text="@string/music_volume"
                     android:textColor="@color/text"
                     android:textSize="15sp" />
                 <TextView android:id="@+id/tvGain" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="100%" android:textColor="@color/accent2" android:textSize="15sp" />
@@ -203,7 +212,7 @@
                 android:id="@+id/overlaySwitch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="ভাসমান কন্ট্রোল (ওভারলে)"
+                android:text="@string/floating_controls"
                 android:textColor="@color/text"
                 android:textSize="16sp" />
 
@@ -211,7 +220,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="গেমের ওপরেই গান চালু/বন্ধ, প্লে/পজ, পরের গান ও ভলিউম"
+                android:text="@string/floating_hint"
                 android:textColor="@color/muted"
                 android:textSize="12sp" />
         </LinearLayout>
@@ -227,7 +236,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="অডিও লাইব্রেরি"
+                android:text="@string/audio_library"
                 android:textColor="@color/text"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -236,7 +245,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="ফোন থেকে অডিও যোগ করুন, তারপর ভাসমান কন্ট্রোল থেকে সরাসরি বাজান"
+                android:text="@string/library_hint"
                 android:textColor="@color/muted"
                 android:textSize="12sp" />
 
@@ -247,7 +256,7 @@
                 android:layout_marginTop="12dp"
                 android:background="@drawable/bg_btn_ghost"
                 android:stateListAnimator="@null"
-                android:text="+ অডিও যোগ করুন"
+                android:text="@string/add_audio"
                 android:textAllCaps="false"
                 android:textColor="@color/text"
                 android:textSize="15sp" />
@@ -267,7 +276,7 @@
             android:layout_marginTop="18dp"
             android:background="@drawable/bg_btn_ghost"
             android:stateListAnimator="@null"
-            android:text="টেস্ট টোন (৩ সেকেন্ড)"
+            android:text="@string/test_tone"
             android:textAllCaps="false"
             android:textColor="@color/text"
             android:textSize="15sp" />
@@ -279,7 +288,7 @@
             android:layout_marginTop="10dp"
             android:background="@drawable/bg_btn_ghost"
             android:stateListAnimator="@null"
-            android:text="বিস্তারিত লগ"
+            android:text="@string/detailed_log"
             android:textAllCaps="false"
             android:textColor="@color/text"
             android:textSize="15sp" />
@@ -304,7 +313,7 @@
                     android:layout_weight="1"
                     android:background="@drawable/bg_btn_ghost"
                     android:stateListAnimator="@null"
-                    android:text="লগ কপি"
+                    android:text="@string/copy_log"
                     android:textAllCaps="false"
                     android:textColor="@color/text"
                     android:textSize="14sp" />
@@ -316,7 +325,7 @@
                     android:layout_weight="1"
                     android:background="@drawable/bg_btn_ghost"
                     android:stateListAnimator="@null"
-                    android:text="সার্ভিস লগ"
+                    android:text="@string/service_log"
                     android:textAllCaps="false"
                     android:textColor="@color/text"
                     android:textSize="14sp" />
