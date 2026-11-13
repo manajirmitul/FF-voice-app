@@ -4,179 +4,171 @@ import android.Manifest
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
+import android.graphics.drawable.GradientDrawable
 import android.media.projection.MediaProjectionManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
-import android.os.ParcelFileDescriptor
+import android.provider.Settings
+import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ProgressBar
-import android.widget.ScrollView
+import android.widget.SeekBar
+import android.widget.Switch
 import android.widget.TextView
-import rikka.shizuku.Shizuku
 
 class MainActivity : Activity() {
 
     private val reqProjection = 100
     private val reqPerms = 101
-    private val reqShizuku = 200
+    private var updating = false
 
+    private lateinit var dotShizuku: View
+    private lateinit var dotPath: View
+    private lateinit var dotCapture: View
+    private lateinit var tvShizuku: TextView
+    private lateinit var tvPath: TextView
+    private lateinit var tvCapture: TextView
+    private lateinit var btnMain: Button
+    private lateinit var musicSwitch: Switch
+    private lateinit var overlaySwitch: Switch
+    private lateinit var sbGain: SeekBar
+    private lateinit var tvGain: TextView
+    private lateinit var levelBar: ProgressBar
+    private lateinit var logBox: LinearLayout
     private lateinit var logView: TextView
-    private lateinit var bar: ProgressBar
-    private var svc: IMicService? = null
 
-    private val permListener = Shizuku.OnRequestPermissionResultListener { code, result ->
-        if (code == reqShizuku) {
-            if (result == PackageManager.PERMISSION_GRANTED) bindSvc()
-            else log("Shizuku পারমিশন দেওয়া হয়নি")
-        }
-    }
-
-    private val conn = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-            svc = IMicService.Stub.asInterface(binder)
-            log("Shizuku সার্ভিস সংযুক্ত হয়েছে")
-            showServiceLog()
-        }
-
-        override fun onServiceDisconnected(name: ComponentName) {
-            svc = null
-            log("Shizuku সার্ভিস বিচ্ছিন্ন")
-        }
-    }
-
-    private fun userArgs() = Shizuku.UserServiceArgs(
-        ComponentName(packageName, MicService::class.java.name)
-    ).daemon(false).processNameSuffix("mic").debuggable(false).version(2)
-
-    private fun showServiceLog() {
-        val s = svc ?: return
-        Thread {
-            val t = try { s.lastLog() } catch (e: Throwable) { "লগ পড়া যায়নি: $e" }
-            log("সার্ভিস লগ:\n" + t)
-        }.start()
-    }
-
-    private fun log(s: String) {
-        runOnUiThread { logView.append(s + "\n\n") }
-    }
-
-    private fun makeButton(label: String, action: () -> Unit): Button {
-        val b = Button(this)
-        b.text = label
-        b.setOnClickListener { action() }
-        return b
-    }
+    private val changeListener: () -> Unit = { runOnUiThread { refresh() } }
+    private val levelListener: (Int) -> Unit = { v -> runOnUiThread { levelBar.progress = v } }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        Engine.init(this)
 
-        val scroll = ScrollView(this)
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(40, 100, 40, 40)
+        dotShizuku = findViewById(R.id.dotShizuku)
+        dotPath = findViewById(R.id.dotPath)
+        dotCapture = findViewById(R.id.dotCapture)
+        tvShizuku = findViewById(R.id.tvShizuku)
+        tvPath = findViewById(R.id.tvPath)
+        tvCapture = findViewById(R.id.tvCapture)
+        btnMain = findViewById(R.id.btnMain)
+        musicSwitch = findViewById(R.id.musicSwitch)
+        overlaySwitch = findViewById(R.id.overlaySwitch)
+        sbGain = findViewById(R.id.sbGain)
+        tvGain = findViewById(R.id.tvGain)
+        levelBar = findViewById(R.id.levelBar)
+        logBox = findViewById(R.id.logBox)
+        logView = findViewById(R.id.logView)
+
+        btnMain.setOnClickListener {
+            if (Engine.captureOn || Engine.pathReady) Engine.stopAll(this) else startAll()
         }
 
-        val title = TextView(this)
-        title.text = "অডিও মাইক টেস্ট"
-        title.textSize = 22f
-
-        bar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal)
-        bar.max = 100
-
-        logView = TextView(this)
-        logView.textSize = 13f
-        logView.setTextIsSelectable(true)
-        logView.setPadding(0, 32, 0, 0)
-
-        root.addView(title)
-        root.addView(makeButton("১. Shizuku সংযোগ") { connectShizuku() })
-        root.addView(makeButton("২. মাইক পাথ চালু করুন") { startPath() })
-        root.addView(makeButton("৩. টেস্ট টোন (৩ সেকেন্ড)") { playTone() })
-        root.addView(makeButton("৪. গান ধরা শুরু") { beginCapture() })
-        root.addView(bar, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 60))
-        root.addView(makeButton("সব বন্ধ করুন") { stopAll() })
-        root.addView(makeButton("সার্ভিস লগ দেখুন") { showServiceLog() })
-        root.addView(makeButton("লগ কপি করুন") { copyLog() })
-        root.addView(logView)
-        scroll.addView(root)
-        setContentView(scroll)
-
-        Shizuku.addRequestPermissionResultListener(permListener)
-        CaptureService.onLevel = { lvl -> runOnUiThread { bar.progress = lvl } }
-        CaptureService.onStatus = { s -> log(s) }
-        log("প্রথমে ১ নম্বর বাটন চাপুন")
-    }
-
-    private fun connectShizuku() {
-        try {
-            if (!Shizuku.pingBinder()) {
-                log("Shizuku চালু নেই। Shizuku অ্যাপ খুলে চালু করুন।")
-                return
+        musicSwitch.setOnCheckedChangeListener { _, checked ->
+            if (!updating) {
+                Engine.musicOn = checked
+                Engine.notifyChange()
             }
-            if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
-                bindSvc()
-            } else {
-                Shizuku.requestPermission(reqShizuku)
-            }
-        } catch (e: Throwable) {
-            log("Shizuku ত্রুটি: $e")
         }
-    }
 
-    private fun bindSvc() {
-        try {
-            Shizuku.bindUserService(userArgs(), conn)
-            log("সার্ভিস চালু করা হচ্ছে...")
-        } catch (e: Throwable) {
-            log("bind ত্রুটি: $e")
-        }
-    }
-
-    private fun startPath() {
-        val s = svc
-        if (s == null) {
-            log("আগে ১ নম্বর বাটন চাপুন এবং সংযোগের অপেক্ষা করুন")
-            return
-        }
-        try {
-            val pipe = ParcelFileDescriptor.createPipe()
-            val readSide = pipe[0]
-            val writeSide = pipe[1]
-            CaptureService.sink = ParcelFileDescriptor.AutoCloseOutputStream(writeSide)
-            Thread {
-                val res = try {
-                    s.start(readSide, CaptureService.SAMPLE_RATE)
-                } catch (e: Throwable) {
-                    "ত্রুটি: $e"
+        sbGain.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    Engine.gain = progress / 100f
+                    tvGain.text = "$progress%"
+                    Engine.notifyChange()
                 }
-                try { readSide.close() } catch (_: Throwable) {}
-                log(res)
-            }.start()
-        } catch (e: Throwable) {
-            log("পাথ ত্রুটি: $e")
+            }
+
+            override fun onStartTrackingTouch(sb: SeekBar?) {}
+            override fun onStopTrackingTouch(sb: SeekBar?) {}
+        })
+
+        overlaySwitch.setOnCheckedChangeListener { _, checked ->
+            if (!updating) {
+                if (checked) {
+                    if (Settings.canDrawOverlays(this)) {
+                        startService(Intent(this, OverlayService::class.java))
+                    } else {
+                        startActivity(
+                            Intent(
+                                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                                Uri.parse("package:$packageName")
+                            )
+                        )
+                        Engine.log("'অন্য অ্যাপের ওপরে দেখান' অনুমতি দিয়ে ফিরে এসে আবার চালু করুন")
+                        refresh()
+                    }
+                } else {
+                    stopService(Intent(this, OverlayService::class.java))
+                }
+            }
         }
+
+        findViewById<Button>(R.id.btnTone).setOnClickListener { Engine.tone() }
+        findViewById<Button>(R.id.btnLog).setOnClickListener {
+            logBox.visibility = if (logBox.visibility == View.VISIBLE) View.GONE else View.VISIBLE
+        }
+        findViewById<Button>(R.id.btnCopy).setOnClickListener {
+            val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            cm.setPrimaryClip(ClipData.newPlainText("log", Engine.logText()))
+            Engine.log("লগ কপি হয়েছে")
+        }
+        findViewById<Button>(R.id.btnSvcLog).setOnClickListener { Engine.fetchServiceLog() }
+
+        Engine.listeners.add(changeListener)
+        Engine.levelListeners.add(levelListener)
+        refresh()
     }
 
-    private fun playTone() {
-        val s = svc
-        if (s == null) {
-            log("আগে ১ ও ২ নম্বর ধাপ করুন")
-            return
-        }
-        Thread {
-            val res = try { s.tone(3) } catch (e: Throwable) { "ত্রুটি: $e" }
-            log(res)
-        }.start()
+    private fun dot(v: View, color: Int) {
+        val d = GradientDrawable()
+        d.shape = GradientDrawable.OVAL
+        d.setColor(color)
+        v.background = d
     }
 
-    private fun beginCapture() {
+    private fun setRow(d: View, t: TextView, on: Boolean, onText: String, offText: String) {
+        dot(d, getColor(if (on) R.color.ok else R.color.dot_off))
+        t.text = if (on) onText else offText
+        t.setTextColor(getColor(if (on) R.color.ok else R.color.muted))
+    }
+
+    private fun refresh() {
+        updating = true
+        setRow(dotShizuku, tvShizuku, Engine.svc != null, "সংযুক্ত", "সংযুক্ত নয়")
+        setRow(dotPath, tvPath, Engine.pathReady, "প্রস্তুত", "বন্ধ")
+        setRow(dotCapture, tvCapture, Engine.captureOn, "গান ধরছে", "বন্ধ")
+
+        val running = Engine.captureOn || Engine.pathReady
+        if (Engine.busy) {
+            btnMain.text = "অপেক্ষা করুন..."
+            btnMain.isEnabled = false
+        } else if (running) {
+            btnMain.text = "বন্ধ করুন"
+            btnMain.setBackgroundResource(R.drawable.bg_btn_danger)
+            btnMain.isEnabled = true
+        } else {
+            btnMain.text = "শুরু করুন"
+            btnMain.setBackgroundResource(R.drawable.bg_btn_primary)
+            btnMain.isEnabled = true
+        }
+
+        musicSwitch.isChecked = Engine.musicOn
+        overlaySwitch.isChecked = OverlayService.running
+        val p = (Engine.gain * 100).toInt()
+        if (sbGain.progress != p) sbGain.progress = p
+        tvGain.text = "$p%"
+        logView.text = Engine.logText()
+        updating = false
+    }
+
+    private fun startAll() {
         val need = ArrayList<String>()
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             need.add(Manifest.permission.RECORD_AUDIO)
@@ -186,15 +178,21 @@ class MainActivity : Activity() {
         ) {
             need.add(Manifest.permission.POST_NOTIFICATIONS)
         }
-        if (need.isEmpty()) askProjection() else requestPermissions(need.toTypedArray(), reqPerms)
+        if (need.isNotEmpty()) {
+            requestPermissions(need.toTypedArray(), reqPerms)
+            return
+        }
+        Engine.prepare { ok ->
+            if (ok) runOnUiThread { askProjection() }
+        }
     }
 
     override fun onRequestPermissionsResult(code: Int, perms: Array<out String>, results: IntArray) {
         super.onRequestPermissionsResult(code, perms, results)
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            askProjection()
+            startAll()
         } else {
-            log("মাইক্রোফোন পারমিশন দরকার")
+            Engine.log("মাইক্রোফোন পারমিশন দরকার")
         }
     }
 
@@ -208,43 +206,26 @@ class MainActivity : Activity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == reqProjection) {
             if (resultCode == RESULT_OK && data != null) {
-                val i = Intent(this, CaptureService::class.java).apply {
-                    action = CaptureService.ACTION_START
-                    putExtra(CaptureService.EXTRA_CODE, resultCode)
-                    putExtra(CaptureService.EXTRA_DATA, data)
-                }
+                val i = Intent(this, CaptureService::class.java)
+                i.action = CaptureService.ACTION_START
+                i.putExtra(CaptureService.EXTRA_CODE, resultCode)
+                i.putExtra(CaptureService.EXTRA_DATA, data)
                 startForegroundService(i)
             } else {
-                log("অনুমতি দেওয়া হয়নি")
+                Engine.busy = false
+                Engine.log("গান ধরার অনুমতি দেওয়া হয়নি")
             }
         }
     }
 
-    private fun stopAll() {
-        startService(Intent(this, CaptureService::class.java).apply {
-            action = CaptureService.ACTION_STOP
-        })
-        try { CaptureService.sink?.close() } catch (_: Throwable) {}
-        CaptureService.sink = null
-        val s = svc
-        if (s != null) {
-            Thread {
-                try { s.stop() } catch (_: Throwable) {}
-                log("মাইক পাথ বন্ধ")
-            }.start()
-        }
-    }
-
-    private fun copyLog() {
-        val cm = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        cm.setPrimaryClip(ClipData.newPlainText("log", logView.text.toString()))
-        log("লগ কপি হয়েছে")
+    override fun onResume() {
+        super.onResume()
+        refresh()
     }
 
     override fun onDestroy() {
-        try { Shizuku.removeRequestPermissionResultListener(permListener) } catch (_: Throwable) {}
-        CaptureService.onLevel = null
-        CaptureService.onStatus = null
+        Engine.listeners.remove(changeListener)
+        Engine.levelListeners.remove(levelListener)
         super.onDestroy()
     }
 }

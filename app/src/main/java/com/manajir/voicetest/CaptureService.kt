@@ -18,7 +18,6 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import java.io.IOException
-import java.io.OutputStream
 import kotlin.math.abs
 
 class CaptureService : Service() {
@@ -29,12 +28,8 @@ class CaptureService : Service() {
         const val EXTRA_CODE = "code"
         const val EXTRA_DATA = "data"
         private const val CHANNEL_ID = "capture"
-        const val SAMPLE_RATE = 44100
 
         @Volatile var running = false
-        @Volatile var sink: OutputStream? = null
-        var onLevel: ((Int) -> Unit)? = null
-        var onStatus: ((String) -> Unit)? = null
     }
 
     private var projection: MediaProjection? = null
@@ -59,7 +54,9 @@ class CaptureService : Service() {
                 intent.getParcelableExtra(EXTRA_DATA)
             }
             if (data == null) {
-                onStatus?.invoke("অনুমতির তথ্য পাওয়া যায়নি")
+                Engine.log("অনুমতির তথ্য পাওয়া যায়নি")
+                Engine.busy = false
+                Engine.notifyChange()
                 stopSelf()
             } else {
                 startCapture(code, data)
@@ -71,11 +68,11 @@ class CaptureService : Service() {
     private fun startForegroundNow() {
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Audio capture", NotificationManager.IMPORTANCE_LOW)
+            NotificationChannel(CHANNEL_ID, "FF Voice", NotificationManager.IMPORTANCE_LOW)
         )
         val notification = Notification.Builder(this, CHANNEL_ID)
-            .setContentTitle("Audio Mic Test")
-            .setContentText("ফোনের গান ধরা হচ্ছে")
+            .setContentTitle("FF Voice")
+            .setContentText("ফোনের গান মাইকে পাঠানো হচ্ছে")
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .build()
         startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
@@ -93,20 +90,20 @@ class CaptureService : Service() {
             }, Handler(Looper.getMainLooper()))
             projection = mp
 
-            // Only music/media. Game sound and voice chat are NOT captured,
-            // so they don't get fed back into the mic.
+            // Only music/media is captured, so game sound and voice chat
+            // are not fed back into the mic.
             val config = AudioPlaybackCaptureConfiguration.Builder(mp)
                 .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
                 .build()
 
             val format = AudioFormat.Builder()
                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                .setSampleRate(SAMPLE_RATE)
+                .setSampleRate(Engine.SAMPLE_RATE)
                 .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
                 .build()
 
             val minBuf = AudioRecord.getMinBufferSize(
-                SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
+                Engine.SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT
             )
 
             val rec = AudioRecord.Builder()
@@ -117,7 +114,9 @@ class CaptureService : Service() {
             record = rec
             rec.startRecording()
             running = true
-            onStatus?.invoke("গান ধরা চলছে। এখন মিউজিক অ্যাপে গান চালান")
+            Engine.captureOn = true
+            Engine.busy = false
+            Engine.log("গান ধরা শুরু হয়েছে। এখন মিউজিক অ্যাপে গান চালান")
 
             worker = Thread {
                 val buf = ShortArray(2048)
@@ -129,42 +128,52 @@ class CaptureService : Service() {
                             val v = abs(buf[i].toInt())
                             if (v > peak) peak = v
                         }
-                        onLevel?.invoke((peak * 100 / 32767).coerceAtMost(100))
+                        Engine.emitLevel((peak * 100 / 32767).coerceAtMost(100))
 
-                        val out = sink
-                        if (out != null) {
+                        val out = Engine.sink
+                        if (out != null && Engine.musicOn) {
+                            val g = Engine.gain
                             val bytes = ByteArray(n * 2)
                             for (i in 0 until n) {
-                                val s = buf[i].toInt()
+                                var s = (buf[i] * g).toInt()
+                                if (s > 32767) s = 32767
+                                if (s < -32768) s = -32768
                                 bytes[2 * i] = (s and 0xff).toByte()
                                 bytes[2 * i + 1] = (s shr 8).toByte()
                             }
                             try {
                                 out.write(bytes)
                             } catch (e: IOException) {
-                                sink = null
-                                onStatus?.invoke("পাইপ ভেঙে গেছে: মাইক সার্ভিস আর পড়ছে না")
+                                if (Engine.sink === out) Engine.sink = null
+                                Engine.log("পাইপ ভেঙে গেছে: মাইক সার্ভিস আর পড়ছে না")
                             }
                         }
                     }
                 }
             }.also { it.start() }
         } catch (e: Exception) {
-            onStatus?.invoke("ত্রুটি: " + e.javaClass.simpleName + " " + (e.message ?: ""))
+            Engine.log("ত্রুটি: " + e.javaClass.simpleName + " " + (e.message ?: ""))
+            Engine.busy = false
+            Engine.captureOn = false
+            Engine.notifyChange()
             stopCapture()
             stopSelf()
         }
     }
 
     private fun stopCapture() {
+        val was = running
         running = false
         try { record?.stop() } catch (_: Exception) {}
         try { record?.release() } catch (_: Exception) {}
         record = null
         try { projection?.stop() } catch (_: Exception) {}
         projection = null
-        onLevel?.invoke(0)
-        onStatus?.invoke("গান ধরা বন্ধ")
+        if (was) {
+            Engine.captureOn = false
+            Engine.emitLevel(0)
+            Engine.log("গান ধরা বন্ধ")
+        }
     }
 
     override fun onDestroy() {
