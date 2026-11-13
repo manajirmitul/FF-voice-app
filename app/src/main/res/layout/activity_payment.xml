@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:padding="24dp"
     android:gravity="center_horizontal"
-    android:background="@color/black">
+    android:background="@android:color/black">
 
     <TextView
         android:layout_width="wrap_content"
@@ -28,7 +28,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="দয়া করে নিচের নম্বরে সেন্ড মানি করুন:\n• বিকাশ (Personal): 01728277602\n• নগদ (Personal): 01331383836"
+        android:text="দয়া করে নিচের নম্বরে সেন্ড মানি করুন:\n• বিকাশ (Personal): 01728277602\n• নগদ (Personal): 01331383836"
         android:textSize="15sp"
         android:textColor="@android:color/white"
         android:background="@drawable/bg_card"
