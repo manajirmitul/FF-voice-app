@@ -31,6 +31,7 @@ class MainActivity : Activity() {
     private val reqPick = 102
     private var updating = false
     private var libStamp = ""
+    private var ready = false
 
     private lateinit var dotShizuku: View
     private lateinit var dotPath: View
@@ -55,6 +56,12 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!Auth.isLoggedIn(this)) {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
+        ready = true
         setContentView(R.layout.activity_main)
         Engine.init(this)
 
@@ -137,9 +144,25 @@ class MainActivity : Activity() {
         }
         findViewById<Button>(R.id.btnSvcLog).setOnClickListener { Engine.fetchServiceLog() }
 
+        findViewById<TextView>(R.id.tvUser).text = Auth.email(this)
+        findViewById<TextView>(R.id.btnLogout).setOnClickListener { doLogout() }
+        if (!Auth.keyMissing()) {
+            Auth.validate(this) { valid ->
+                if (!valid) doLogout()
+            }
+        }
+
         Engine.listeners.add(changeListener)
         Engine.levelListeners.add(levelListener)
         refresh()
+    }
+
+    private fun doLogout() {
+        Engine.stopAll(this)
+        stopService(Intent(this, OverlayService::class.java))
+        Auth.signOut(this)
+        startActivity(Intent(this, LoginActivity::class.java))
+        finish()
     }
 
     private fun dot(v: View, color: Int) {
@@ -326,7 +349,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        refresh()
+        if (ready) refresh()
     }
 
     override fun onDestroy() {
