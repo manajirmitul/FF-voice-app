@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_checking">Проверяем ваш аккаунт...</string>
+    <string name="choose_plan">Выберите тариф</string>
+    <string name="plans_sub">Уникальный ключ придёт после проверки оплаты</string>
+    <string name="plan_expired">Срок тарифа истёк. Выберите тариф, чтобы продолжить</string>
+    <string name="plan_rejected">Не удалось подтвердить последний платёж. Проверьте ID транзакции и повторите</string>
+    <string name="months_1">1 месяц</string>
+    <string name="months_3">3 месяца</string>
+    <string name="months_12">12 месяцев</string>
+    <string name="per_month_fmt">৳ %1$d в месяц</string>
+    <string name="save_fmt">Экономия ৳ %1$d</string>
+    <string name="best_value">Самый выгодный</string>
+    <string name="pay_title">Отправьте оплату</string>
+    <string name="pay_amount_fmt">Отправьте ৳ %1$d за тариф «%2$s»</string>
+    <string name="pay_to">Отправьте деньги (Send Money) на этот номер</string>
+    <string name="copy_number">Скопировать номер</string>
+    <string name="copied">Скопировано</string>
+    <string name="pay_note">Используйте Send Money, а не Cash Out. Затем введите полученный ID транзакции</string>
+    <string name="trx_hint">ID транзакции</string>
+    <string name="submit_payment">Подтвердить оплату</string>
+    <string name="trx_required">Введите ID транзакции</string>
+    <string name="back">Назад</string>
+    <string name="key_title">Введите ваш ключ</string>
+    <string name="key_pending">Ваш платёж проверяется. Ключ скоро придёт. Введите его здесь, чтобы начать</string>
+    <string name="key_hint">Ваш ключ</string>
+    <string name="activate">Активировать</string>
+    <string name="key_required">Введите ключ</string>
+    <string name="key_wrong">Этот ключ не подходит к этому аккаунту</string>
+    <string name="no_internet">Нет подключения к интернету. Проверьте и повторите</string>
+    <string name="retry">Повторить</string>
+    <string name="buy_other">Выбрать другой тариф</string>
+    <string name="key_ready">Ваш ключ готов. Введите его ниже, чтобы начать</string>
+</resources>

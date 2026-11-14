@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_checking">Checking your account...</string>
+    <string name="choose_plan">Choose a plan</string>
+    <string name="plans_sub">You\'ll get your unique key once your payment is verified</string>
+    <string name="plan_expired">Your plan has ended. Choose a plan to continue</string>
+    <string name="plan_rejected">We couldn\'t verify your last payment. Check the Transaction ID and try again</string>
+    <string name="months_1">1 month</string>
+    <string name="months_3">3 months</string>
+    <string name="months_12">12 months</string>
+    <string name="per_month_fmt">৳ %1$d / month</string>
+    <string name="save_fmt">Save ৳ %1$d</string>
+    <string name="best_value">Best value</string>
+    <string name="pay_title">Send payment</string>
+    <string name="pay_amount_fmt">Send ৳ %1$d for the %2$s plan</string>
+    <string name="pay_to">Send Money to this number</string>
+    <string name="copy_number">Copy number</string>
+    <string name="copied">Copied</string>
+    <string name="pay_note">Use Send Money, not Cash Out. Then enter the Transaction ID you received</string>
+    <string name="trx_hint">Transaction ID</string>
+    <string name="submit_payment">Submit payment</string>
+    <string name="trx_required">Enter the Transaction ID</string>
+    <string name="back">Back</string>
+    <string name="key_title">Enter your key</string>
+    <string name="key_pending">Your payment is being verified. Your key will reach you soon. Enter it here to start</string>
+    <string name="key_hint">Your key</string>
+    <string name="activate">Activate</string>
+    <string name="key_required">Enter your key</string>
+    <string name="key_wrong">That key doesn\'t match this account</string>
+    <string name="no_internet">No internet connection. Check it and try again</string>
+    <string name="retry">Retry</string>
+    <string name="buy_other">Choose a different plan</string>
+    <string name="key_ready">Your key is ready. Enter it below to start</string>
+</resources>

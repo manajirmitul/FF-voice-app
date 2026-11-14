@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_checking">آپ کا اکاؤنٹ چیک کیا جا رہا ہے...</string>
+    <string name="choose_plan">ایک پلان منتخب کریں</string>
+    <string name="plans_sub">ادائیگی کی تصدیق کے بعد آپ کو اپنی منفرد Key ملے گی</string>
+    <string name="plan_expired">آپ کا پلان ختم ہو گیا ہے۔ جاری رکھنے کے لیے پلان منتخب کریں</string>
+    <string name="plan_rejected">ہم آپ کی پچھلی ادائیگی کی تصدیق نہیں کر سکے۔ Transaction ID دیکھ کر دوبارہ کوشش کریں</string>
+    <string name="months_1">1 مہینہ</string>
+    <string name="months_3">3 مہینے</string>
+    <string name="months_12">12 مہینے</string>
+    <string name="per_month_fmt">فی مہینہ ৳ %1$d</string>
+    <string name="save_fmt">৳ %1$d کی بچت</string>
+    <string name="best_value">سب سے بہتر قیمت</string>
+    <string name="pay_title">ادائیگی بھیجیں</string>
+    <string name="pay_amount_fmt">%2$s پلان کے لیے ৳ %1$d بھیجیں</string>
+    <string name="pay_to">اس نمبر پر Send Money کریں</string>
+    <string name="copy_number">نمبر کاپی کریں</string>
+    <string name="copied">کاپی ہو گیا</string>
+    <string name="pay_note">Send Money استعمال کریں، Cash Out نہیں۔ پھر ملی ہوئی Transaction ID نیچے لکھیں</string>
+    <string name="trx_hint">Transaction ID</string>
+    <string name="submit_payment">ادائیگی جمع کرائیں</string>
+    <string name="trx_required">Transaction ID لکھیں</string>
+    <string name="back">واپس</string>
+    <string name="key_title">اپنی Key درج کریں</string>
+    <string name="key_pending">آپ کی ادائیگی کی تصدیق ہو رہی ہے۔ Key جلد آپ تک پہنچے گی۔ ملنے پر یہاں درج کر کے شروع کریں</string>
+    <string name="key_hint">آپ کی Key</string>
+    <string name="activate">فعال کریں</string>
+    <string name="key_required">اپنی Key لکھیں</string>
+    <string name="key_wrong">یہ Key اس اکاؤنٹ سے میل نہیں کھاتی</string>
+    <string name="no_internet">انٹرنیٹ کنکشن نہیں ہے۔ چیک کر کے دوبارہ کوشش کریں</string>
+    <string name="retry">دوبارہ کوشش کریں</string>
+    <string name="buy_other">دوسرا پلان منتخب کریں</string>
+    <string name="key_ready">آپ کی Key تیار ہے۔ شروع کرنے کے لیے نیچے درج کریں</string>
+</resources>

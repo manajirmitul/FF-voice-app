@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_checking">Revisando tu cuenta...</string>
+    <string name="choose_plan">Elige un plan</string>
+    <string name="plans_sub">Recibirás tu clave única cuando se verifique el pago</string>
+    <string name="plan_expired">Tu plan ha terminado. Elige un plan para continuar</string>
+    <string name="plan_rejected">No pudimos verificar tu último pago. Revisa el ID de transacción e inténtalo de nuevo</string>
+    <string name="months_1">1 mes</string>
+    <string name="months_3">3 meses</string>
+    <string name="months_12">12 meses</string>
+    <string name="per_month_fmt">৳ %1$d / mes</string>
+    <string name="save_fmt">Ahorra ৳ %1$d</string>
+    <string name="best_value">Mejor precio</string>
+    <string name="pay_title">Envía el pago</string>
+    <string name="pay_amount_fmt">Envía ৳ %1$d por el plan de %2$s</string>
+    <string name="pay_to">Envía dinero (Send Money) a este número</string>
+    <string name="copy_number">Copiar número</string>
+    <string name="copied">Copiado</string>
+    <string name="pay_note">Usa Send Money, no Cash Out. Luego escribe el ID de transacción que recibiste</string>
+    <string name="trx_hint">ID de transacción</string>
+    <string name="submit_payment">Confirmar pago</string>
+    <string name="trx_required">Escribe el ID de transacción</string>
+    <string name="back">Atrás</string>
+    <string name="key_title">Introduce tu clave</string>
+    <string name="key_pending">Estamos verificando tu pago. Tu clave llegará pronto. Introdúcela aquí para empezar</string>
+    <string name="key_hint">Tu clave</string>
+    <string name="activate">Activar</string>
+    <string name="key_required">Introduce tu clave</string>
+    <string name="key_wrong">Esa clave no coincide con esta cuenta</string>
+    <string name="no_internet">Sin conexión a internet. Revísala e inténtalo de nuevo</string>
+    <string name="retry">Reintentar</string>
+    <string name="buy_other">Elegir otro plan</string>
+    <string name="key_ready">Tu clave está lista. Introdúcela abajo para empezar</string>
+</resources>

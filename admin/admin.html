@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FF Voice Admin</title>
+<style>
+:root{--bg:#0A0E1A;--card:#121A2E;--line:#1F2A47;--text:#EAF0FF;--mut:#8A94B2;--acc:#22D3EE;--ok:#34D399;--bad:#F43F5E;--warn:#F59E0B}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,sans-serif;padding:16px;max-width:640px;margin:auto}
+h1{font-size:20px;margin:6px 0 14px}input{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:1px solid var(--line);background:#0F1526;color:var(--text);font-size:15px}
+button{border:0;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600;cursor:pointer;color:#fff;background:#7C5CFF}
+button.ok{background:#16a37a}button.bad{background:#c8304b}button.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.mut{color:var(--mut);font-size:13px}.tag{font-size:12px;padding:2px 8px;border-radius:8px;background:#222c4a}
+.pending{background:#5b4300;color:#ffd277}.approved{background:#0d4d3a;color:#7df0c4}.rejected{background:#5a1626;color:#ffa1b3}
+.key{font:700 20px ui-monospace,monospace;letter-spacing:1px;margin:8px 0;word-break:break-all}
+#msg{color:var(--warn);min-height:20px;margin:6px 0}.tabs{display:flex;gap:8px;margin:10px 0}.tabs button{flex:1}
+</style></head><body>
+<h1>FF Voice Admin</h1>
+<div id="msg"></div>
+
+<div id="login" class="card">
+  <div class="mut">Sign in with your admin account (the email you put in the Firestore rules)</div>
+  <input id="em" type="email" placeholder="Email" autocomplete="username">
+  <input id="pw" type="password" placeholder="Password" autocomplete="current-password">
+  <div class="row"><button onclick="doLogin()">Sign in</button></div>
+</div>
+
+<div id="app" hidden>
+  <div class="tabs"><button id="t1" onclick="tab('req')">Requests</button><button id="t2" class="ghost" onclick="tab('lic')">Licenses</button><button class="ghost" onclick="reload()">Refresh</button></div>
+  <div id="list"></div>
+</div>
+
+<script>
+const API_KEY = "AIzaSyBVUzFz5eraNlRJK2VUj2vgkejDuFsWakQ";
+const PROJECT = "ff-voice-9bb6c";
+const PLANS = {"1m":{days:30,price:100,name:"1 month"},"3m":{days:90,price:200,name:"3 months"},"12m":{days:365,price:500,name:"12 months"}};
+const BASE = "https://firestore.googleapis.com/v1/projects/" + PROJECT + "/databases/(default)/documents/";
+let token = null, current = "req";
+const $ = id => document.getElementById(id);
+const say = t => $("msg").textContent = t || "";
+
+async function doLogin() {
+  say("");
+  try {
+    const r = await fetch("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + API_KEY, {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({email: $("em").value.trim(), password: $("pw").value, returnSecureToken: true})});
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error && j.error.message || "sign-in failed");
+    token = j.idToken;
+    $("login").hidden = true; $("app").hidden = false;
+    reload();
+  } catch (e) { say("Sign-in failed: " + e.message); }
+}
+
+async function fs(path, opt) {
+  opt = opt || {};
+  const r = await fetch(BASE + path, {method: opt.method || "GET",
+    headers: {"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+    body: opt.body ? JSON.stringify(opt.body) : undefined});
+  const t = await r.text();
+  if (!r.ok) throw new Error(r.status + " " + t.slice(0, 160));
+  return t ? JSON.parse(t) : {};
+}
+const S = v => ({stringValue: v}), I = v => ({integerValue: String(v)}), T = ms => ({timestampValue: new Date(ms).toISOString().replace(/\.\d+Z$/, "Z")});
+function val(f) { if (!f) return null; if ("stringValue" in f) return f.stringValue; if ("integerValue" in f) return Number(f.integerValue); if ("timestampValue" in f) return f.timestampValue; return null; }
+function obj(doc) { const o = {id: doc.name.split("/").pop()}; for (const k in (doc.fields || {})) o[k] = val(doc.fields[k]); return o; }
+function when(ts) { return ts ? new Date(ts).toLocaleString() : "-"; }
+
+function genKey() {
+  const A = "23456789ABCDEFGHJKMNPQRSTUVWXYZ", b = new Uint8Array(12);
+  crypto.getRandomValues(b);
+  const c = Array.from(b, x => A[x % A.length]).join("");
+  return "FFV-" + c.slice(0, 4) + "-" + c.slice(4, 8) + "-" + c.slice(8, 12);
+}
+
+function tab(n) { current = n; $("t1").className = n === "req" ? "" : "ghost"; $("t2").className = n === "lic" ? "" : "ghost"; reload(); }
+async function reload() { say(""); try { current === "req" ? await showRequests() : await showLicenses(); } catch (e) { say("Error: " + e.message); } }
+
+async function showRequests() {
+  const d = await fs("requests?pageSize=300");
+  const rows = (d.documents || []).map(obj).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  const out = [`<div class="mut">${rows.length} request(s). Match the Transaction ID with your bKash/Nagad app before approving.</div>`];
+  for (const r of rows) {
+    const p = PLANS[r.plan];
+    const warn = p && p.price !== r.amount ? `<div style="color:var(--warn)">Amount mismatch</div>` : "";
+    out.push(`<div class="card"><div><b>${esc(r.email)}</b> <span class="tag ${esc(r.status)}">${esc(r.status)}</span></div>
+      <div class="mut">${esc(p ? p.name : r.plan)} - ${esc(r.amount)} taka via ${esc(r.method)}</div>
+      <div>Transaction ID: <b>${esc(r.trx)}</b></div><div class="mut">${when(r.createdAt)}</div>${warn}
+      <div class="row">${r.status === "pending" ? `<button class="ok" onclick="approve('${r.id}')">Approve</button><button class="bad" onclick="reject('${r.id}')">Reject</button>` : ""}
+      ${r.status === "rejected" ? `<button class="ok" onclick="approve('${r.id}')">Approve anyway</button>` : ""}</div></div>`);
+  }
+  $("list").innerHTML = out.join("");
+}
+
+async function showLicenses() {
+  const d = await fs("licenses?pageSize=300");
+  const rows = (d.documents || []).map(obj).sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  const now = Date.now();
+  const out = [`<div class="mut">${rows.length} license(s)</div>`];
+  for (const l of rows) {
+    const st = !l.activatedAt ? "not started" : (new Date(l.expiresAt).getTime() > now ? "active" : "expired");
+    out.push(`<div class="card"><div><b>${esc(l.email)}</b> <span class="tag">${st}</span></div>
+      <div class="key" style="font-size:15px">${esc(l.key)}</div>
+      <div class="mut">${esc((PLANS[l.plan] || {}).name || l.plan)} - started ${when(l.activatedAt)} - ends ${when(l.expiresAt)}</div>
+      <div class="row"><button class="bad" onclick="revoke('${l.id}')">Revoke</button></div></div>`);
+  }
+  $("list").innerHTML = out.join("");
+}
+
+async function getReq(uid) { return obj(await fs("requests/" + uid)); }
+
+async function approve(uid) {
+  try {
+    const r = await getReq(uid), p = PLANS[r.plan];
+    if (!p) throw new Error("unknown plan " + r.plan);
+    const key = genKey();
+    await fs("licenses/" + uid, {method: "PATCH", body: {fields: {
+      email: S(r.email), key: S(key), plan: S(r.plan), days: I(p.days), amount: I(r.amount),
+      activatedAt: {nullValue: null}, createdAt: T(Date.now())}}});
+    await fs("requests/" + uid + "?updateMask.fieldPaths=status", {method: "PATCH", body: {fields: {status: S("approved")}}});
+    const text = "FF Voice key: " + key + "\nPlan: " + p.name + "\nEnter it in the app after you log in with " + r.email;
+    $("list").innerHTML = `<div class="card"><div style="color:var(--ok);font-weight:700">Approved</div><div class="mut">${esc(r.email)}</div>
+      <div class="key">${key}</div><div class="row"><button onclick='copyText(${JSON.stringify(text)})'>Copy message</button><button class="ghost" onclick="reload()">Back</button></div></div>`;
+  } catch (e) { say("Approve failed: " + e.message); }
+}
+async function reject(uid) {
+  if (!confirm("Reject this request?")) return;
+  try { await fs("requests/" + uid + "?updateMask.fieldPaths=status", {method: "PATCH", body: {fields: {status: S("rejected")}}}); reload(); }
+  catch (e) { say("Failed: " + e.message); }
+}
+async function revoke(uid) {
+  if (!confirm("Revoke this license? The user loses access.")) return;
+  try { await fs("licenses/" + uid, {method: "DELETE"}); reload(); } catch (e) { say("Failed: " + e.message); }
+}
+function copyText(t) { navigator.clipboard.writeText(t).then(() => say("Copied"), () => say("Copy failed, select the text manually")); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+</script></body></html>

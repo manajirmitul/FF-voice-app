@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_checking">Memeriksa akun Anda...</string>
+    <string name="choose_plan">Pilih paket</string>
+    <string name="plans_sub">Anda akan mendapat kunci unik setelah pembayaran diverifikasi</string>
+    <string name="plan_expired">Paket Anda telah berakhir. Pilih paket untuk melanjutkan</string>
+    <string name="plan_rejected">Kami tidak dapat memverifikasi pembayaran terakhir Anda. Periksa ID Transaksi lalu coba lagi</string>
+    <string name="months_1">1 bulan</string>
+    <string name="months_3">3 bulan</string>
+    <string name="months_12">12 bulan</string>
+    <string name="per_month_fmt">৳ %1$d / bulan</string>
+    <string name="save_fmt">Hemat ৳ %1$d</string>
+    <string name="best_value">Paling hemat</string>
+    <string name="pay_title">Kirim pembayaran</string>
+    <string name="pay_amount_fmt">Kirim ৳ %1$d untuk paket %2$s</string>
+    <string name="pay_to">Kirim uang (Send Money) ke nomor ini</string>
+    <string name="copy_number">Salin nomor</string>
+    <string name="copied">Disalin</string>
+    <string name="pay_note">Gunakan Send Money, bukan Cash Out. Lalu masukkan ID Transaksi yang Anda terima</string>
+    <string name="trx_hint">ID Transaksi</string>
+    <string name="submit_payment">Konfirmasi pembayaran</string>
+    <string name="trx_required">Masukkan ID Transaksi</string>
+    <string name="back">Kembali</string>
+    <string name="key_title">Masukkan kunci Anda</string>
+    <string name="key_pending">Pembayaran Anda sedang diverifikasi. Kunci akan segera sampai. Masukkan di sini untuk mulai</string>
+    <string name="key_hint">Kunci Anda</string>
+    <string name="activate">Aktifkan</string>
+    <string name="key_required">Masukkan kunci Anda</string>
+    <string name="key_wrong">Kunci ini tidak cocok dengan akun ini</string>
+    <string name="no_internet">Tidak ada koneksi internet. Periksa lalu coba lagi</string>
+    <string name="retry">Coba lagi</string>
+    <string name="buy_other">Pilih paket lain</string>
+    <string name="key_ready">Kunci Anda sudah siap. Masukkan di bawah untuk mulai</string>
+</resources>

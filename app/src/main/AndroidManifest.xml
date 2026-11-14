@@ -25,6 +25,11 @@
         </activity>
 
         <activity
+            android:name=".AccessActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".LoginActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />

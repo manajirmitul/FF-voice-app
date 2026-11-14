@@ -28,6 +28,28 @@ object Auth {
 
     fun signOut(c: Context) {
         prefs(c).edit().clear().apply()
+        Access.clear(c)
+    }
+
+    /** Firebase user id, read from the saved ID token. */
+    fun uid(c: Context): String {
+        val t = prefs(c).getString("id", "") ?: ""
+        return try {
+            val p = t.split(".")[1]
+            val bytes = android.util.Base64.decode(
+                p, android.util.Base64.URL_SAFE or android.util.Base64.NO_PADDING or android.util.Base64.NO_WRAP
+            )
+            val j = JSONObject(String(bytes, Charsets.UTF_8))
+            j.optString("user_id", j.optString("sub", ""))
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    /** A fresh ID token. Blocking: call from a background thread. */
+    fun idToken(c: Context): String {
+        ensureToken(c)
+        return prefs(c).getString("id", "") ?: ""
     }
 
     // ---------- low-level HTTP ----------

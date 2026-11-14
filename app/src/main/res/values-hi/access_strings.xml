@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_checking">आपका अकाउंट जाँचा जा रहा है...</string>
+    <string name="choose_plan">एक प्लान चुनें</string>
+    <string name="plans_sub">भुगतान सत्यापित होने पर आपको आपकी यूनिक Key मिलेगी</string>
+    <string name="plan_expired">आपका प्लान खत्म हो गया है। जारी रखने के लिए प्लान चुनें</string>
+    <string name="plan_rejected">हम आपका पिछला भुगतान सत्यापित नहीं कर सके। Transaction ID जाँचकर फिर कोशिश करें</string>
+    <string name="months_1">1 महीना</string>
+    <string name="months_3">3 महीने</string>
+    <string name="months_12">12 महीने</string>
+    <string name="per_month_fmt">प्रति माह ৳ %1$d</string>
+    <string name="save_fmt">৳ %1$d की बचत</string>
+    <string name="best_value">सबसे किफ़ायती</string>
+    <string name="pay_title">भुगतान भेजें</string>
+    <string name="pay_amount_fmt">%2$s प्लान के लिए ৳ %1$d भेजें</string>
+    <string name="pay_to">इस नंबर पर Send Money करें</string>
+    <string name="copy_number">नंबर कॉपी करें</string>
+    <string name="copied">कॉपी हो गया</string>
+    <string name="pay_note">Send Money का उपयोग करें, Cash Out का नहीं। फिर मिली Transaction ID नीचे लिखें</string>
+    <string name="trx_hint">Transaction ID</string>
+    <string name="submit_payment">भुगतान जमा करें</string>
+    <string name="trx_required">Transaction ID लिखें</string>
+    <string name="back">वापस</string>
+    <string name="key_title">अपनी Key दर्ज करें</string>
+    <string name="key_pending">आपका भुगतान सत्यापित हो रहा है। Key जल्द ही आप तक पहुँचेगी। मिलने पर यहाँ दर्ज करके शुरू करें</string>
+    <string name="key_hint">आपकी Key</string>
+    <string name="activate">सक्रिय करें</string>
+    <string name="key_required">अपनी Key लिखें</string>
+    <string name="key_wrong">यह Key इस अकाउंट से मेल नहीं खाती</string>
+    <string name="no_internet">इंटरनेट कनेक्शन नहीं है। जाँचकर फिर कोशिश करें</string>
+    <string name="retry">फिर कोशिश करें</string>
+    <string name="buy_other">दूसरा प्लान चुनें</string>
+    <string name="key_ready">आपकी Key तैयार है। शुरू करने के लिए नीचे दर्ज करें</string>
+</resources>

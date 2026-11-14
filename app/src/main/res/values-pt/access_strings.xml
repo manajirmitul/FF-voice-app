@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_checking">Verificando sua conta...</string>
+    <string name="choose_plan">Escolha um plano</string>
+    <string name="plans_sub">Você receberá sua chave exclusiva quando o pagamento for verificado</string>
+    <string name="plan_expired">Seu plano terminou. Escolha um plano para continuar</string>
+    <string name="plan_rejected">Não conseguimos verificar seu último pagamento. Confira o ID da transação e tente de novo</string>
+    <string name="months_1">1 mês</string>
+    <string name="months_3">3 meses</string>
+    <string name="months_12">12 meses</string>
+    <string name="per_month_fmt">৳ %1$d / mês</string>
+    <string name="save_fmt">Economize ৳ %1$d</string>
+    <string name="best_value">Melhor custo-benefício</string>
+    <string name="pay_title">Envie o pagamento</string>
+    <string name="pay_amount_fmt">Envie ৳ %1$d pelo plano de %2$s</string>
+    <string name="pay_to">Envie dinheiro (Send Money) para este número</string>
+    <string name="copy_number">Copiar número</string>
+    <string name="copied">Copiado</string>
+    <string name="pay_note">Use Send Money, não Cash Out. Depois digite o ID da transação que você recebeu</string>
+    <string name="trx_hint">ID da transação</string>
+    <string name="submit_payment">Confirmar pagamento</string>
+    <string name="trx_required">Digite o ID da transação</string>
+    <string name="back">Voltar</string>
+    <string name="key_title">Digite sua chave</string>
+    <string name="key_pending">Seu pagamento está sendo verificado. Sua chave chegará em breve. Digite-a aqui para começar</string>
+    <string name="key_hint">Sua chave</string>
+    <string name="activate">Ativar</string>
+    <string name="key_required">Digite sua chave</string>
+    <string name="key_wrong">Essa chave não corresponde a esta conta</string>
+    <string name="no_internet">Sem conexão com a internet. Verifique e tente de novo</string>
+    <string name="retry">Tentar de novo</string>
+    <string name="buy_other">Escolher outro plano</string>
+    <string name="key_ready">Sua chave está pronta. Digite-a abaixo para começar</string>
+</resources>

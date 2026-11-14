@@ -65,6 +65,11 @@ class MainActivity : Activity() {
             finish()
             return
         }
+        if (!Access.cachedActive(this)) {
+            startActivity(Intent(this, AccessActivity::class.java))
+            finish()
+            return
+        }
         ready = true
         setContentView(R.layout.activity_main)
         Engine.init(this)
@@ -162,6 +167,16 @@ class MainActivity : Activity() {
         if (!Auth.keyMissing()) {
             Auth.validate(this) { valid ->
                 if (!valid) doLogout()
+            }
+        }
+
+        // Re-check the plan against the server; leave if it is no longer active.
+        Access.check(this) { st ->
+            if (st.code == Access.NEED_PLAN || st.code == Access.NEED_KEY) {
+                Engine.stopAll(this)
+                stopService(Intent(this, OverlayService::class.java))
+                startActivity(Intent(this, AccessActivity::class.java))
+                finish()
             }
         }
 

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_checking">جارٍ فحص حسابك...</string>
+    <string name="choose_plan">اختر خطة</string>
+    <string name="plans_sub">ستحصل على مفتاحك الخاص بعد التحقق من الدفع</string>
+    <string name="plan_expired">انتهت خطتك. اختر خطة للمتابعة</string>
+    <string name="plan_rejected">تعذر التحقق من دفعتك الأخيرة. تحقق من رقم العملية وحاول مرة أخرى</string>
+    <string name="months_1">شهر واحد</string>
+    <string name="months_3">3 أشهر</string>
+    <string name="months_12">12 شهراً</string>
+    <string name="per_month_fmt">৳ %1$d شهرياً</string>
+    <string name="save_fmt">وفّر ৳ %1$d</string>
+    <string name="best_value">أفضل قيمة</string>
+    <string name="pay_title">أرسل الدفعة</string>
+    <string name="pay_amount_fmt">أرسل ৳ %1$d لخطة %2$s</string>
+    <string name="pay_to">أرسل المبلغ (Send Money) إلى هذا الرقم</string>
+    <string name="copy_number">نسخ الرقم</string>
+    <string name="copied">تم النسخ</string>
+    <string name="pay_note">استخدم Send Money وليس Cash Out، ثم أدخل رقم العملية الذي وصلك</string>
+    <string name="trx_hint">رقم العملية (Transaction ID)</string>
+    <string name="submit_payment">تأكيد الدفع</string>
+    <string name="trx_required">أدخل رقم العملية</string>
+    <string name="back">رجوع</string>
+    <string name="key_title">أدخل مفتاحك</string>
+    <string name="key_pending">جارٍ التحقق من دفعتك. سيصلك المفتاح قريباً. أدخله هنا للبدء</string>
+    <string name="key_hint">مفتاحك</string>
+    <string name="activate">تفعيل</string>
+    <string name="key_required">أدخل مفتاحك</string>
+    <string name="key_wrong">هذا المفتاح لا يطابق هذا الحساب</string>
+    <string name="no_internet">لا يوجد اتصال بالإنترنت. تحقق وحاول مرة أخرى</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="buy_other">اختر خطة أخرى</string>
+    <string name="key_ready">مفتاحك جاهز. أدخله أدناه للبدء</string>
+</resources>

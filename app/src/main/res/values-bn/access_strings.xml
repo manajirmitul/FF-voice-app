@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="access_checking">আপনার অ্যাকাউন্ট দেখা হচ্ছে...</string>
+    <string name="choose_plan">একটা প্ল্যান বেছে নিন</string>
+    <string name="plans_sub">পেমেন্ট যাচাই হলে আপনি আপনার ইউনিক key পাবেন</string>
+    <string name="plan_expired">আপনার প্ল্যানের মেয়াদ শেষ। চালিয়ে যেতে একটা প্ল্যান বেছে নিন</string>
+    <string name="plan_rejected">আপনার শেষ পেমেন্ট যাচাই করা যায়নি। Transaction ID দেখে আবার চেষ্টা করুন</string>
+    <string name="months_1">১ মাস</string>
+    <string name="months_3">৩ মাস</string>
+    <string name="months_12">১২ মাস</string>
+    <string name="per_month_fmt">মাসে ৳ %1$d</string>
+    <string name="save_fmt">৳ %1$d সাশ্রয়</string>
+    <string name="best_value">সবচেয়ে সাশ্রয়ী</string>
+    <string name="pay_title">পেমেন্ট পাঠান</string>
+    <string name="pay_amount_fmt">%2$s প্ল্যানের জন্য ৳ %1$d পাঠান</string>
+    <string name="pay_to">এই নম্বরে Send Money করুন</string>
+    <string name="copy_number">নম্বর কপি</string>
+    <string name="copied">কপি হয়েছে</string>
+    <string name="pay_note">Send Money ব্যবহার করুন, Cash Out নয়। তারপর পাওয়া Transaction ID নিচে লিখুন</string>
+    <string name="trx_hint">Transaction ID</string>
+    <string name="submit_payment">পেমেন্ট জমা দিন</string>
+    <string name="trx_required">Transaction ID লিখুন</string>
+    <string name="back">পেছনে</string>
+    <string name="key_title">আপনার key দিন</string>
+    <string name="key_pending">আপনার পেমেন্ট যাচাই চলছে। key শিগগিরই পৌঁছে যাবে। পেলে এখানে বসিয়ে শুরু করুন</string>
+    <string name="key_hint">আপনার key</string>
+    <string name="activate">চালু করুন</string>
+    <string name="key_required">আপনার key লিখুন</string>
+    <string name="key_wrong">এই key এই অ্যাকাউন্টের সাথে মিলছে না</string>
+    <string name="no_internet">ইন্টারনেট সংযোগ নেই। দেখে আবার চেষ্টা করুন</string>
+    <string name="retry">আবার চেষ্টা</string>
+    <string name="buy_other">অন্য প্ল্যান বেছে নিন</string>
+    <string name="key_ready">আপনার key তৈরি। শুরু করতে নিচে বসান</string>
+</resources>
